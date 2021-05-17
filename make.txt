@@ -1,0 +1,29 @@
+/////BISON
+bison -d bison.y
+gcc -c bison.tab.c
+flex flex.l
+gcc -c lex.yy.c
+gcc -o fin bison.tab.o lex.yy.o
+./fin
+
+/////SIMPLE
+bison -d Simple.y
+gcc -c Simple.tab.c
+flex Simple.lex
+gcc -c lex.yy.c
+gcc -o fin Simple.tab.o lex.yy.o
+./fin
+
+
+/**Run the library of graphics*/
+/////GRAPHICS
+gcc -o ex ex.c -lGL -lGLU -lglut -lm
+./ex
+
+/////BISON WITH GRAPHICS
+bison -d Simple.y
+gcc -c Simple.tab.c
+flex Simple.lex
+gcc -c lex.yy.c
+gcc -o fin Simple.tab.o lex.yy.o -lGL -lGLU -lglut -lm
+./fin
