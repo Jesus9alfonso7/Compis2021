@@ -87,13 +87,10 @@ struct proceduresDirectory
 char *name; 
 int codeinitial;
 int type; 
-
 int arrayParamsTypes[3]; 
-
 struct parameters *initialParam; 
 struct parameters *finalParam;
 struct localVariables *localMemory;
-
 struct proceduresDirectory *next; 
 };
 typedef struct proceduresDirectory proceduresDirectory;
@@ -105,14 +102,7 @@ struct globalVariables
 {
 char *name;
 int virtualAddress;
-
-
-/*
-int type;
-*/
 int type; 
-
-
 struct globalVariables *next; 
 };
 typedef struct globalVariables globalVariables;
@@ -123,9 +113,7 @@ struct localVariables
 {
 char *name; 
 int virtualAddress;
-
 int type;
-
 struct globalVariables *globalVars;
 struct localVariables *next; 
 };
@@ -147,15 +135,14 @@ typedef struct parameters parameters;
 struct constantTable
 {
 char *name;
-
 int intValue;
+/*
 int *intValuebool;
+*/
 char charValue;
 float floatValue;
-
 int type;
 int virtualAddress;
-
 struct constantTable *next; 
 };
 typedef struct constantTable constantTable;
@@ -177,7 +164,6 @@ struct tempVar
 char *name; 
 int virtualAddress;
 int type;
-
 struct tempVar *next; 
 };
 typedef struct tempVar tempVar;
@@ -509,10 +495,10 @@ localVariables *ptr;
 if(localVariablesTable != NULL){
 for ( ptr = localVariablesTable;
 ptr != (localVariables *) 0;
-ptr = (localVariables *)ptr->next )
+ptr = (localVariables *)ptr->next ){
 if (strcmp (ptr->name,name) == 0){
 foundFlag = ptr->virtualAddress;
-}
+}}
 if (foundFlag != 0)
 {
     return foundFlag;
@@ -522,7 +508,10 @@ else{
     return foundFlag;
 }
 }
-return 0;
+else{
+foundFlag = getGlobalVarTable(name);
+return foundFlag;
+}
 }
 
 int getbyVyrtualAddresLocalVarTable(int vir)
@@ -1009,13 +998,12 @@ return NULL;
 
 
 
-
-/* -----------------  0         1        2         3        4          5    6     7   8   9    10             11 12  13  14     15          16        17           18      19            20        21    22   23   24                         
+/* -----------------  0         1        2         3        4          5    6     7   8   9    10             11 12  13  14     15          16        17           18      19            20        21    22   23   24   25                      
 */
-enum operationsCode {MAININIT, GOTO, GOTOFALSE, GOSUB, GOSUBSPECIAL, MULT, DIV, ADD, SUB, EQ, EQUALITYSYMBOL, LT,GT,LOET,GOET, ANDLOGICAL, ORLOGICAL, READVAL, WRITEVAL , RETURNVAL, ENDFUNCTION,PARAM, ERA, VER, END  };
+enum operationsCode {MAININIT, GOTO, GOTOFALSE, GOSUB, GOSUBSPECIAL, MULT, DIV, ADD, SUB, EQ, EQUALITYSYMBOL, LT,GT,LOET,GOET, ANDLOGICAL, ORLOGICAL, READVAL, WRITEVAL , RETURNVAL, ENDFUNCTION,PARAM, ERA, VER, END, NOTEQUALITYSYMBOL};
 
 /* OPERATIONS:  Representation */
- char *operationsCodeName[] = {"MAININIT" ,"GOTO", "GOTOFALSE", "GOSUB", "GOSUBSPECIAL", "MULT", "DIV", "ADD", "SUB", "EQ", "EQUALITYSYMBOL", "LT","GT","LOET","GOET", "ANDLOGICAL", "ORLOGICAL", "READVAL", "WRITEVAL" , "RETURNVAL", "ENDFUNCTION","PARAM", "ERA", "VER","END" };
+char *operationsCodeName[] = {"MAININIT" ,"GOTO", "GOTOFALSE", "GOSUB", "GOSUBSPECIAL", "MULT", "DIV", "ADD", "SUB", "EQ", "EQUALITYSYMBOL", "LT","GT","LOET","GOET", "ANDLOGICAL", "ORLOGICAL", "READVAL", "WRITEVAL" , "RETURNVAL", "ENDFUNCTION","PARAM", "ERA", "VER","END", "NOTEQUALITYSYMBOL" };
 
 struct instructionCode
 {
@@ -1075,7 +1063,7 @@ typedef struct operators operators;
 
 
 /*-----------------------------------------------------------------------
-Initializa Stakcs
+Initializa Stacks
 -----------------------------------------------------------------------*/
 
 jumpStack *jumpStackActual;
@@ -1292,7 +1280,32 @@ i++;
 
 
 
-/*-------------------Start Virtual Machine-------------------------*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*-----------------------------------Virtual Machine------------------------------------*/
 
 
 /*-------------------------------------------------*/
@@ -1345,6 +1358,7 @@ int localvirtaddresscount[4];
 int constvirtaddresscount[4];
 int tempvirtaddresscount[4];
 
+/**************** se crea la memoria estatica de la maquina virtual *********/
 struct memValues * createMemory(struct memValues *s, int lenInt, int lenFloat, int lenChar){
     s = (struct memValues *) malloc(sizeof(struct memValues));
 
@@ -1374,6 +1388,19 @@ struct stackMemValues * createLocalMemory(struct stackMemValues *s, int lenInt, 
 }
 
 
+/************** End structures for Virtual Machine **************/
+
+
+
+
+
+
+
+
+
+/******** Start of methods for structures of Virtual Machine  ******/
+
+
 void putTopLocalMemory(struct stackMemValues *s){
     s->next = actualLocalMemory;
     actualLocalMemory = s;
@@ -1398,13 +1425,13 @@ void changeNewToActual(){
 
 
 int returntypebyByVirtualAddress(int dir){
-    if( (1000 <= dir && dir < 2000) | (10000 <= dir && dir < 11000) | (30000 <= dir && dir < 31000) ){
+    if( (1000 <= dir && dir < 2000) | (10000 <= dir && dir < 11000) | (20000 <= dir && dir < 21000) | (30000 <= dir && dir < 31000) ){
         return 1;
     }
-    if( (2000 <= dir && dir < 3000) | (11000 <= dir && dir < 12000) | (31000 <= dir && dir < 32000) ){
+    if( (2000 <= dir && dir < 3000) | (11000 <= dir && dir < 12000) | (21000 <= dir && dir < 22000) | (31000 <= dir && dir < 32000) ){
         return 2;
     }
-    if( (3000 <= dir && dir < 4000) | (12000 <= dir && dir < 13000) | (32000 <= dir && dir < 33000) ){
+    if( (3000 <= dir && dir < 4000) | (12000 <= dir && dir < 13000) | (22000 <= dir && dir < 23000) | (32000 <= dir && dir < 33000) ){
         return 3;
     }
     if(33000 <= dir && dir < 34000){
@@ -1504,7 +1531,7 @@ int returtIntValue(int dir, int typelocal){
         }
     }
 
-    if(returnGlobalLocalConstanteTemporal(dir) == 4){
+    if(returnGlobalLocalConstanteTemporal(dir) == 5){
         if(33000 <= dir && dir < 34000){
         return tempMemory->structintergers->arrayinterger[dir-33000];
         }
@@ -1552,10 +1579,18 @@ void modifyIntValue(int dir, int value, int typelocal){
             }
         }    
     }
-
-    if(returnGlobalLocalConstanteTemporal(dir) == 3){
+    /*
+    printf("returnGlobalLocalConstanteTemporal : %d  \n" ,returnGlobalLocalConstanteTemporal(dir));
+    printf("dir : %d  \n" ,dir);
+    */
+    if(returnGlobalLocalConstanteTemporal(dir) == 4){
         if(30000 <= dir && dir < 31000){
             tempMemory->structintergers->arrayinterger[dir-30000] = value;
+            
+            printf("Value Modified : %d  \n" ,value);
+            /*
+            printf("Temp  : %d  \n" ,tempMemory->structintergers->arrayinterger[dir-30000]);
+            */
         }
     }
 }
@@ -1615,7 +1650,7 @@ void modifyFloatValue(int dir, float value, int typelocal){
         }    
     }
 
-    if(returnGlobalLocalConstanteTemporal(dir) == 3){
+    if(returnGlobalLocalConstanteTemporal(dir) == 4){
         if(31000 <= dir && dir < 32000){
             tempMemory->structfloats->arrayfloat[dir-31000] = value;
         }
@@ -1689,6 +1724,10 @@ void modifyCharValue(int dir, char value, int typelocal){
 
 
 
+
+
+
+
 /* RUN-TIME Stack Memory*/
 int GotoReturnStack[999];
 int top;
@@ -1734,6 +1773,10 @@ char ch;
     top = 0;
     initial = 0;
 
+
+    /******* Se crean copias de los valores de los directorios 
+             globales de la memoria de compilacion **************/
+
     globalProceduresDirectory * st = globalProceduresDirectoryTable;
     memValues *p = createMemory(p,st->arrayParamsTypes[0],st->arrayParamsTypes[1],st->arrayParamsTypes[2]) ;
     globalMemory = p;
@@ -1771,19 +1814,22 @@ char ch;
             case GOSUBSPECIAL :  ;
             break;
             case MULT : if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
-                            int expval = returtIntValue(execution.arg1,1)*returtIntValue(execution.arg2,1);
+                            int expval = returtIntValue(execution.arg1,1) * returtIntValue(execution.arg2,1);
                             modifyIntValue(execution.result,expval,1);
+                            /*
+                            printf("%d Val type \n", expval);
+                            */
                         }
                         if( (returntypebyByVirtualAddress(execution.arg1) == 2) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
-                            float expval = returtfloatValue(execution.arg1,1)*returtIntValue(execution.arg2,1);
+                            float expval = returtfloatValue(execution.arg1,1) * returtIntValue(execution.arg2,1);
                             modifyFloatValue(execution.result,expval,1);
                         }
                         if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 2) ) {
-                            float expval = returtIntValue(execution.arg1,1)*returtfloatValue(execution.arg2,1);
+                            float expval = returtIntValue(execution.arg1,1) * returtfloatValue(execution.arg2,1);
                             modifyFloatValue(execution.result,expval,1);
                         }
                         if( (returntypebyByVirtualAddress(execution.arg1) == 2) & (returntypebyByVirtualAddress(execution.arg2) == 2) ) {
-                            float expval = returtfloatValue(execution.arg1,1)*returtfloatValue(execution.arg2,1);
+                            float expval = returtfloatValue(execution.arg1,1) * returtfloatValue(execution.arg2,1);
                             modifyFloatValue(execution.result,expval,1);
                         }        
              ;
@@ -1794,6 +1840,9 @@ char ch;
             case DIV :  if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
                             int expval = returtIntValue(execution.arg1,1)/returtIntValue(execution.arg2,1);
                             modifyIntValue(execution.result,expval,1);
+                            /*
+                            printf("%d Val type \n", expval);
+                            */
                         }
                         if( (returntypebyByVirtualAddress(execution.arg1) == 2) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
                             float expval = returtfloatValue(execution.arg1,1)/returtIntValue(execution.arg2,1);
@@ -1812,27 +1861,37 @@ char ch;
 
 
             case ADD :  if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
-                            int expval = returtIntValue(execution.arg1,1) - returtIntValue(execution.arg2,1);
+                            int expval = returtIntValue(execution.arg1,1) + returtIntValue(execution.arg2,1);
                             modifyIntValue(execution.result,expval,1);
+                            /*
+                            printf("%d Val type \n", expval);
+                            */
                         }
                         if( (returntypebyByVirtualAddress(execution.arg1) == 2) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
-                            float expval = returtfloatValue(execution.arg1,1) - returtIntValue(execution.arg2,1);
+                            float expval = returtfloatValue(execution.arg1,1) + returtIntValue(execution.arg2,1);
                             modifyFloatValue(execution.result,expval,1);
                         }
                         if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 2) ) {
-                            float expval = returtIntValue(execution.arg1,1) - returtfloatValue(execution.arg2,1);
+                            float expval = returtIntValue(execution.arg1,1) + returtfloatValue(execution.arg2,1);
                             modifyFloatValue(execution.result,expval,1);
                         }
                         if( (returntypebyByVirtualAddress(execution.arg1) == 2) & (returntypebyByVirtualAddress(execution.arg2) == 2) ) {
-                            float expval = returtfloatValue(execution.arg1,1) - returtfloatValue(execution.arg2,1);
+                            float expval = returtfloatValue(execution.arg1,1) + returtfloatValue(execution.arg2,1);
                             modifyFloatValue(execution.result,expval,1);
-                        } ;
+                        }
+                        /*
+                        printf("%d Val type \n", returntypebyByVirtualAddress(execution.arg1));
+                        */ 
+                ;
             break;
 
 
             case SUB :  if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
                             int expval = returtIntValue(execution.arg1,1) - returtIntValue(execution.arg2,1);
                             modifyIntValue(execution.result,expval,1);
+                            /*
+                            printf("%d Val type \n", expval);
+                            */
                         }
                         if( (returntypebyByVirtualAddress(execution.arg1) == 2) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
                             float expval = returtfloatValue(execution.arg1,1) - returtIntValue(execution.arg2,1);
@@ -1850,7 +1909,19 @@ char ch;
 
             case EQ : if( (returntypebyByVirtualAddress(execution.arg1) == 1) )  {
                             int expval = returtIntValue(execution.arg1,1);
+                            /*
+                            int expval2 = returtIntValue(execution.result,1);
+                            int expval30000 = returtIntValue(30000,1);
+                            printf("Exarg1 val %d \n",expval);
+                            printf("expval2 val %d \n",expval2);
+                            printf("expval30000 val %d \n",expval30000);
+                            */
                             modifyIntValue(execution.result,expval,1);
+                            /*
+                            printf("After Exarg1 val %d \n",expval);
+                            printf("After expval2 val %d \n",expval2);
+                            */
+                            
                         }
                         if( (returntypebyByVirtualAddress(execution.arg1) == 2) ) {
                             float expval = returtfloatValue(execution.arg1,1);
@@ -1908,6 +1979,52 @@ char ch;
 
 
             break;
+            case NOTEQUALITYSYMBOL :if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
+                                        if(returtIntValue(execution.arg1,1) != returtIntValue(execution.arg2,1)){
+                                            modifyIntValue(execution.result,1,1);
+                                        }
+                                        else{
+                                            modifyIntValue(execution.result,0,1);
+                                        }
+                                        
+                                    }
+                                    if( (returntypebyByVirtualAddress(execution.arg1) == 2) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
+                                        modifyIntValue(execution.result,1,1);
+                                    }
+                                    if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 2) ) {
+                                        modifyIntValue(execution.result,1,1);
+                                    }
+                                    if( (returntypebyByVirtualAddress(execution.arg1) == 2) & (returntypebyByVirtualAddress(execution.arg2) == 2) ) {
+                                        if(returtfloatValue(execution.arg1,1) != returtfloatValue(execution.arg2,1)){
+                                            modifyIntValue(execution.result,1,1);
+                                        }
+                                        else{
+                                            modifyIntValue(execution.result,0,1);
+                                        }
+                                    }
+                                    if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 3) ) {
+                                        modifyIntValue(execution.result,1,1);
+                                    }
+                                    if( (returntypebyByVirtualAddress(execution.arg1) == 2) & (returntypebyByVirtualAddress(execution.arg2) == 3) ) {
+                                        modifyIntValue(execution.result,1,1);
+                                    }
+                                    if( (returntypebyByVirtualAddress(execution.arg1) == 3) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
+                                        modifyIntValue(execution.result,1,1);
+                                    }
+                                    if( (returntypebyByVirtualAddress(execution.arg1) == 3) & (returntypebyByVirtualAddress(execution.arg2) == 2) ) {
+                                        modifyIntValue(execution.result,1,1);
+                                    }
+                                    if( (returntypebyByVirtualAddress(execution.arg1) == 3) & (returntypebyByVirtualAddress(execution.arg2) == 3) ) {
+                                        if(returtcharValue(execution.arg1,1) != returtcharValue(execution.arg2,1)){
+                                            modifyCharValue(execution.result,1,1);
+                                        }
+                                        else{
+                                            modifyCharValue(execution.result,0,1);
+                                        }
+                                    } ; 
+
+
+            break;
             case LT :               if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
                                         if(returtIntValue(execution.arg1,1) < returtIntValue(execution.arg2,1)){
                                             modifyIntValue(execution.result,1,1);
@@ -1948,14 +2065,28 @@ char ch;
                                     } ;
             break;
             case GT :               if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
+                                        /*
+                                        printf("Enter Both Int\n"); 
+                                        */
                                         if(returtIntValue(execution.arg1,1) > returtIntValue(execution.arg2,1)){
+                                            /*
+                                            int expval = returtIntValue(30000,1);
+                                            printf("Before val %d \n",expval);
+                                            */
                                             modifyIntValue(execution.result,1,1);
+                                            /*
+                                            expval = returtIntValue(30000,1);
+                                            printf("After val %d \n",expval);
+                                            */
                                         }
                                         else{
                                             modifyIntValue(execution.result,0,1);
+                                            /*
+                                            printf("Enter Greater Than False\n"); 
+                                            */
                                         }
                                         
-                                    }
+                                    }else{
                                     if( (returntypebyByVirtualAddress(execution.arg1) == 2) & (returntypebyByVirtualAddress(execution.arg2) == 2) ) {
                                         if(returtfloatValue(execution.arg1,1) > returtfloatValue(execution.arg2,1)){
                                             modifyIntValue(execution.result,1,1);
@@ -1965,7 +2096,7 @@ char ch;
                                         }
                                     } else{
                                         modifyIntValue(execution.result,0,1);
-                                    };
+                                    }};
             break;
             case LOET :             if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
                                         if(returtIntValue(execution.arg1,1) <= returtIntValue(execution.arg2,1)){
@@ -1975,7 +2106,7 @@ char ch;
                                             modifyIntValue(execution.result,0,1);
                                         }
                                         
-                                    }
+                                    }else{
                                     if( (returntypebyByVirtualAddress(execution.arg1) == 2) & (returntypebyByVirtualAddress(execution.arg2) == 2) ) {
                                         if(returtfloatValue(execution.arg1,1) <= returtfloatValue(execution.arg2,1)){
                                             modifyIntValue(execution.result,1,1);
@@ -1985,7 +2116,7 @@ char ch;
                                         }
                                     } else{
                                         modifyIntValue(execution.result,0,1);
-                                    }; 
+                                    }}; 
             break;
             case GOET :             if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
                                         if(returtIntValue(execution.arg1,1) >= returtIntValue(execution.arg2,1)){
@@ -1995,7 +2126,7 @@ char ch;
                                             modifyIntValue(execution.result,0,1);
                                         }
                                         
-                                    }
+                                    }else{
                                     if( (returntypebyByVirtualAddress(execution.arg1) == 2) & (returntypebyByVirtualAddress(execution.arg2) == 2) ) {
                                         if(returtfloatValue(execution.arg1,1) >= returtfloatValue(execution.arg2,1)){
                                             modifyIntValue(execution.result,1,1);
@@ -2005,7 +2136,7 @@ char ch;
                                         }
                                     } else{
                                         modifyIntValue(execution.result,0,1);
-                                    } ;
+                                    }} ;
             break;
 
             case ANDLOGICAL :        if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
@@ -2020,8 +2151,8 @@ char ch;
                                         modifyIntValue(execution.result,0,1);
                                     }  ;
             break;
-            case ORLOGICAL :        if( (returntypebyByVirtualAddress(execution.arg1) == 1) | (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
-                                        if(returtIntValue(execution.arg1,1) > 0 & 0 < returtIntValue(execution.arg2,1)){
+            case ORLOGICAL :        if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
+                                        if(returtIntValue(execution.arg1,1) > 0 || 0 < returtIntValue(execution.arg2,1)){
                                             modifyIntValue(execution.result,1,1);
                                         }
                                         else{
@@ -2030,7 +2161,7 @@ char ch;
                                         
                                     }else{
                                         modifyIntValue(execution.result,0,1);
-                                    }  ; ;
+                                    }  ; 
             break;
             case READVAL :  if( (returntypebyByVirtualAddress(execution.arg1) == 1) )  {
                                 int expval;
@@ -2049,15 +2180,15 @@ char ch;
                             } ;      
             ;
             break;
-            case WRITEVAL : if( (returntypebyByVirtualAddress(execution.arg1) == 1) )  {
+            case WRITEVAL : if( (returntypebyByVirtualAddress(execution.result) == 1) )  {
                                 int expval = returtIntValue(execution.result,1);
-                                printf("%d Val \n", expval); 
+                                printf("%d\n", expval); 
                             }
-                            if( (returntypebyByVirtualAddress(execution.arg1) == 2) ) {
+                            if( (returntypebyByVirtualAddress(execution.result) == 2) ) {
                                 float expval = returtfloatValue(execution.result,1);
                                 printf("%f\n", expval); 
                             }
-                            if( (returntypebyByVirtualAddress(execution.arg1) == 3) ) {
+                            if( (returntypebyByVirtualAddress(execution.result) == 3) ) {
                                 char expval = returtcharValue(execution.result,1);
                                 printf("%c\n", expval); 
                             };
@@ -2078,7 +2209,7 @@ char ch;
             case ENDFUNCTION : erraseLocalMemory() ; programcounter = GotoReturnStack[top-1];top--;
             break;
             case PARAM : if( (returntypebyByVirtualAddress(execution.arg1) == returntypebyByVirtualAddress(execution.result) & returntypebyByVirtualAddress(execution.result)  == 1 ) )  {
-                                modifyIntValue(execution.result,returtIntValue(execution.arg1,2),2);
+                                modifyIntValue(execution.result,returtIntValue(execution.arg1,3),3);
                                 if(paramsActual == NULL){
                                     printf("error number of params on a method on execution");
                                     errorocurred = 1;
@@ -2087,8 +2218,11 @@ char ch;
                             }
                             else{
                                 if( (returntypebyByVirtualAddress(execution.arg1) == 2 & returntypebyByVirtualAddress(execution.result) == 2) ) {
-                                    float expval = returtfloatValue(execution.arg1,2);
-                                    modifyFloatValue(execution.result,expval,2);
+                                    float expval = returtfloatValue(execution.arg1,3);
+                                    /*
+                                    Antes tenia un 2 al final, se cambio por un 3
+                                    */
+                                    modifyFloatValue(execution.result,expval,3);
                                     if(paramsActual == NULL){
                                         printf("error number of params on a method on execution");
                                         errorocurred = 1;
@@ -2097,8 +2231,11 @@ char ch;
                                 }
                                 else{
                                     if( (returntypebyByVirtualAddress(execution.arg1) == 3 & returntypebyByVirtualAddress(execution.arg1) == 3) ) {
-                                        char expval = returtIntValue(execution.arg1,2);
-                                        modifyFloatValue(execution.result,expval,2);
+                                        char expval = returtIntValue(execution.arg1,3);
+                                        /*
+                                        Antes tenia un 2 al final, se cambio por un 3
+                                        */
+                                        modifyFloatValue(execution.result,expval,3);
                                         if(paramsActual == NULL){
                                             printf("error number of params on a method on execution");
                                             errorocurred = 1;

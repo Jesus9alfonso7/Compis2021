@@ -75,12 +75,27 @@ addVirtualAddressGlobalVarTableTemporals (paramType);
 }
 
 
+installGlobalVar(int paramType, char *name)
+{int value = getGlobalVarTable(name);
+if(value == 0 ){
+addTypeGlobalsParamsProceduresDirectory (paramType);
+addGlobalVarTable(name);
+addTypeGlobalVarTable (paramType);
+addVirtualAddressGlobalVarTable (paramType);
+}
+else{errors++;
+       printf("%s is already defined\n", name);
+}
+}
+
 installLocalDirectory ( int funType, char *dir_name )
 {
 proceduresDirectory *s;
 s = getProceduresDirectory (dir_name);
 if (s == NULL){
+       /*
        free(localVariablesTable);
+       */
        localVariablesTable = NULL;
        if(funType == 3){
               proceduresDirectory * a = putNameProceduresDirectory(dir_name);
@@ -110,30 +125,219 @@ s = CrateGlobalProceduresDirectory (dir_name);
 }
 
 
-installGlobalVar(int paramType, char *name)
-{int value = getGlobalVarTable(name);
-if(value == 0 ){
-addTypeGlobalsParamsProceduresDirectory (paramType);
-addGlobalVarTable(name);
-addTypeGlobalVarTable (paramType);
-addVirtualAddressGlobalVarTable (paramType);
-}
-else{errors++;
-       printf("%s is already defined\n", name);
-}
-}
+
 
 eliminateall(){
 
-       /*falta agregar las funciones de eliminacion*/
-       free(globalProceduresDirectoryTable);
+       if (globalProceduresDirectoryTable != NULL){     
+              free(globalProceduresDirectoryTable->name);
+              while(globalProceduresDirectoryTable->globalMemory != NULL){
+                     globalVariables *ptr;
+                     ptr = globalProceduresDirectoryTable->globalMemory->next;
+                     free(globalProceduresDirectoryTable->globalMemory->name);
+                     free(globalProceduresDirectoryTable->globalMemory);
+                     globalProceduresDirectoryTable->globalMemory = ptr;
+                     
+              }
+              free(globalProceduresDirectoryTable);
+       }  
+       //printf("eliminate globalProceduresDirectoryTable \n");
+
+       /*
        free(globalVariablesTable);
+       */
+
+       while(temporalsVarTable != NULL){
+              globalVariables *ptr;
+              ptr = temporalsVarTable->next;
+              free(temporalsVarTable->name);
+              free(temporalsVarTable);
+              temporalsVarTable = ptr;
+       }
+       //printf("eliminate temporalsVarTable \n");
+
+
+       /*
        free(temporalsVarTable);
+       */
+
+       while(proceduresDirectoryTable != NULL){
+              proceduresDirectory *ptr;
+              ptr = proceduresDirectoryTable->next;
+              free(proceduresDirectoryTable->name);
+
+              while(proceduresDirectoryTable->localMemory != NULL){
+                     localVariables *ptr_aux;
+                     ptr_aux = proceduresDirectoryTable->localMemory->next;
+                     free(proceduresDirectoryTable->localMemory->name);
+                     free(proceduresDirectoryTable->localMemory);
+                     proceduresDirectoryTable->localMemory = ptr_aux;
+              }
+
+              while(proceduresDirectoryTable->initialParam != NULL){
+                     parameters *ptr_aux;
+                     ptr_aux = proceduresDirectoryTable->initialParam->next;
+                     free(proceduresDirectoryTable->initialParam);
+                     proceduresDirectoryTable->initialParam = ptr_aux;
+              }
+
+              free(proceduresDirectoryTable);
+              proceduresDirectoryTable = ptr;
+       }
+       
+       //printf("eliminate proceduresDirectoryTable \n");
+       /*
        free(proceduresDirectoryTable);
        free(localVariablesTable);
+       */
+
+
+       while(constantDirectory != NULL){
+              constantsDirectory *ptr;
+              ptr = constantDirectory->next;
+              free(constantDirectory->name);
+
+              while(constantDirectory->constantTableMemory != NULL){
+                     constantTable *ptr_aux;
+                     ptr_aux = constantDirectory->constantTableMemory->next;
+                     free(constantDirectory->constantTableMemory->name);
+                     free(constantDirectory->constantTableMemory);
+                     constantDirectory->constantTableMemory = ptr_aux;
+              }
+
+              free(constantDirectory);
+              constantDirectory = ptr;
+       }
+       
+       //printf("eliminate constantDirectory \n");
+
+       /*
        free(constantDirectory);
        free(constantTableTable);
-       free(tempDirectoryTable);
+       */
+
+       if (tempDirectoryTable != NULL){   
+              free(tempDirectoryTable->name);
+              free(tempDirectoryTable);
+       }
+       
+       //printf("eliminate tempDirectoryTable \n");
+
+
+
+
+       /********* Eliminate the dynamic memory of the code generator ***********/
+       /*
+       jumpStack *jumpStackActual;
+       operandsStack *operandsStackActual;
+       operators *operatorsActual;
+       */
+
+
+
+       while(jumpStackActual != NULL){
+              jumpStack *ptr;
+              ptr = jumpStackActual->next;
+              free(jumpStackActual);
+              jumpStackActual = ptr;
+       }
+
+       while(operandsStackActual != NULL){
+              operandsStack *ptr;
+              ptr = operandsStackActual->next;
+              free(operandsStackActual);
+              operandsStackActual = ptr;
+       }
+
+       while(operatorsActual != NULL){
+              operators *ptr;
+              ptr = operatorsActual->next;
+              free(operatorsActual);
+              operatorsActual = ptr;
+       }
+       /*
+
+       printf("Eliminate the dynamic memory of the code generator\n");
+       */
+
+
+       /********* Eliminate the dynamic memory of the Virtual Machine ***********/
+       /*
+       struct stackMemValues * actualLocalMemory;
+       struct stackMemValues * newLocalMemory;
+       struct memValues * globalMemory;
+       struct memValues * tempMemory;
+       struct parameters * paramsActual;
+
+       stackMemValues *pa;
+       proceduresDirectory * sa;
+
+       */
+       
+       while(actualLocalMemory != NULL){
+              stackMemValues *ptr;
+              ptr = actualLocalMemory->next;
+              free(actualLocalMemory->memoryVar->structintergers);
+              free(actualLocalMemory->memoryVar->structfloats);
+              free(actualLocalMemory->memoryVar->structchars);
+              free(actualLocalMemory->memoryVar);
+              free(actualLocalMemory);
+              actualLocalMemory = ptr;
+       }
+
+       while(newLocalMemory != NULL){
+              stackMemValues *ptr;
+              ptr = newLocalMemory->next;
+              free(newLocalMemory->memoryVar->structintergers);
+              free(newLocalMemory->memoryVar->structfloats);
+              free(newLocalMemory->memoryVar->structchars);
+              free(newLocalMemory->memoryVar);
+              free(newLocalMemory);
+              newLocalMemory = ptr;
+       }
+
+       /*
+       printf("Eliminate newLocalMemory\n");
+       */
+
+       if (globalMemory != NULL){ 
+              free(globalMemory->structintergers);
+              free(globalMemory->structfloats);
+              free(globalMemory->structchars);
+              free(globalMemory);
+       }
+
+
+       if (tempMemory != NULL){ 
+              free(tempMemory->structintergers);
+              free(tempMemory->structfloats);
+              free(tempMemory->structchars);
+              free(tempMemory);
+       }
+
+       while(paramsActual != NULL){
+              parameters *ptr;
+              ptr = paramsActual->next;
+              free(paramsActual);
+              paramsActual = ptr;
+       }
+
+       /*
+       printf("Eliminate the dynamic memory of the Virtual Machine\n");
+       */
+       
+
+       
+
+
+
+
+
+
+
+
+
+
 
 }
 
@@ -181,10 +385,11 @@ int virtualMemory;
 
 
 
+
+%left '|'
+%left '&'
 %left EQUALITY NOTEQUALITY
 %left '<' '>' LESSTHANOREQUAL GREATERTHANOREQUAL
-%left '|'
-%left '&' 
 %left '-' '+'
 %left '*' '/'
 %nonassoc '('
@@ -196,23 +401,30 @@ int virtualMemory;
 
 
 
-initialprogram : PROGRAM {init_Semantic_Cube();code_offset=0; errors = 0; generate_code( 0, -1, -1, -1 ); code_start_main = 0; installConstantDirectory();installTemporalsDirectory();} 
-                                          IDENTIFIER {savevar_current_memory_global_local_const = 1; installGlobalDirectory($3);} 
-                                          ';' variables secondpartprogram   {generate_code(24,-1,-1,-1); printf("%s", "final"); YYACCEPT;}
+initialprogram : PROGRAM {init_Semantic_Cube();code_offset=0; errors = 0; 
+                         generate_code( 0, -1, -1, -1 ); code_start_main = 0; 
+                         installConstantDirectory();installTemporalsDirectory();} 
+                     IDENTIFIER {savevar_current_memory_global_local_const = 1; 
+                                   installGlobalDirectory($3);} 
+                     ';' variables secondpartprogram   {generate_code(24,-1,-1,-1); 
+                                                        printf("%s", "final"); YYACCEPT;}
                 ;
 
                 
-secondpartprogram : declarationoffunctions {savevar_current_memory_global_local_const = 1; generate_code(20,-1,-1,-1); } thirdpartprogram 
-                   ;
+secondpartprogram : declarationoffunctions {savevar_current_memory_global_local_const = 1;
+                                            } 
+                            thirdpartprogram 
+                  ;
 
-thirdpartprogram : MAIN {modify_code_at_given_cuad_num_result(code_offset, 0);}'(' ')' '{' statutes '}'
+thirdpartprogram : MAIN {modify_code_at_given_cuad_num_result(code_offset, 0);}'(' ')' 
+                     '{' statutes '}'
                 ;
 
 
 /* Global variables*/
 variables : VAR 
            '{' variablessecondpart '}'
-           |
+          |
            ;
 
 variablessecondpart : type { current_type_var = $1; } ':' list_ids ';'  
@@ -415,7 +627,9 @@ expression : NUMBERINTEGER {installConstatInt($1);
                                                  $$ = getLocalVarTableOnlylocal($1);
                                            }
                                            else{
-                                                  printf("Identifier no defined : %s \n", $1); errors++;
+                                                  printf("Identifier no defined : %s \n",
+                                                        $1); 
+                                                 errors++;
                                            }
                                    }
                             }
@@ -424,45 +638,101 @@ expression : NUMBERINTEGER {installConstatInt($1);
               constantTable * value = getConstTableByFloat($1); 
               $$ = value->virtualAddress;}
            | expression '<' expression{
-                            int type_exp = semanticCube[4][returntypebyByVirtualAddress($1)-1][returntypebyByVirtualAddress($3)-1];
+                            int type_exp = semanticCube[4]
+                                   [returntypebyByVirtualAddress($1)-1]
+                                   [returntypebyByVirtualAddress($3)-1];
                             if(type_exp == 9 ){
                                    printf("Error type expression");
+                                   errors++;
                             }{
                                   installGlobalVarTemps(type_exp);
-                                   generate_code(11,$1,$3,temporalsVarTable->virtualAddress);
+                                   generate_code(11,$1,$3,
+                                          temporalsVarTable->virtualAddress);
                                    $$ = temporalsVarTable->virtualAddress; 
                             }}
            | expression EQUALITY expression{
-                            int type_exp = semanticCube[0][returntypebyByVirtualAddress($1)-1][returntypebyByVirtualAddress($3)-1];
+                            int type_exp = semanticCube[0]
+                                   [returntypebyByVirtualAddress($1)-1]
+                                   [returntypebyByVirtualAddress($3)-1];
                             if(type_exp == 9 ){
                                    printf("Error type expression");
+                                   errors++;
                             }{
                                   installGlobalVarTemps(type_exp);
-                                   generate_code(10,$1,$3,temporalsVarTable->virtualAddress);
-                                   $$ = temporalsVarTable->virtualAddress; 
+                                   generate_code(10,$1,$3,
+                                          temporalsVarTable->virtualAddress);
+                                   $$ = temporalsVarTable->virtualAddress;
+                            }}
+           | expression NOTEQUALITY expression{
+                            int type_exp = semanticCube[1]
+                                   [returntypebyByVirtualAddress($1)-1]
+                                   [returntypebyByVirtualAddress($3)-1];
+                            if(type_exp == 9 ){
+                                   printf("Error type expression");
+                                   errors++;
+                            }{
+                                  installGlobalVarTemps(type_exp);
+                                   generate_code(25,$1,$3,
+                                          temporalsVarTable->virtualAddress);
+                                   $$ = temporalsVarTable->virtualAddress;
                             }}
            | expression '>' expression {
-                            int type_exp = semanticCube[5][returntypebyByVirtualAddress($1)-1][returntypebyByVirtualAddress($3)-1];
+                            int type_exp = semanticCube[5]
+                                   [returntypebyByVirtualAddress($1)-1]
+                                   [returntypebyByVirtualAddress($3)-1];
                             if(type_exp == 9 ){
                                    printf("Error type expression");
+                                   errors++;
                             }{
                                   installGlobalVarTemps(type_exp);
-                                   generate_code(12,$1,$3,temporalsVarTable->virtualAddress);
+                                   generate_code(12,$1,$3,
+                                          temporalsVarTable->virtualAddress);
                                    $$ = temporalsVarTable->virtualAddress; 
                             }}
+           | expression GREATERTHANOREQUAL expression {
+                            int type_exp = semanticCube[3]
+                                   [returntypebyByVirtualAddress($1)-1]
+                                   [returntypebyByVirtualAddress($3)-1];
+                            if(type_exp == 9 ){
+                                   printf("Error type expression");
+                                   errors++;
+                            }{
+                                  installGlobalVarTemps(type_exp);
+                                   generate_code(14,$1,$3,
+                                          temporalsVarTable->virtualAddress);
+                                   $$ = temporalsVarTable->virtualAddress; 
+                            }}
+           | expression LESSTHANOREQUAL expression {
+                            int type_exp = semanticCube[2]
+                                   [returntypebyByVirtualAddress($1)-1]
+                                   [returntypebyByVirtualAddress($3)-1];
+                            if(type_exp == 9 ){
+                                   printf("Error type expression");
+                                   errors++;
+                            }{
+                                  installGlobalVarTemps(type_exp);
+                                   generate_code(13,$1,$3,
+                                          temporalsVarTable->virtualAddress);
+                                   $$ = temporalsVarTable->virtualAddress; 
+                            }}
+
 
 
            | expression '+' expression 
                             {
                             
-                            int type_exp = semanticCube[9][returntypebyByVirtualAddress($1)-1][returntypebyByVirtualAddress($3)-1];
+                            int type_exp = semanticCube[9]
+                                   [returntypebyByVirtualAddress($1)-1]
+                                   [returntypebyByVirtualAddress($3)-1];
                             
                             if(type_exp == 9 ){
                                    printf("Error type expression");
+                                   errors++;
                             }
                             {
                                   installGlobalVarTemps(type_exp);
-                                   generate_code(7,$1,$3,temporalsVarTable->virtualAddress);
+                                   generate_code(7,$1,$3,
+                                          temporalsVarTable->virtualAddress);
                                    $$ = temporalsVarTable->virtualAddress;
                              
                             }
@@ -473,72 +743,101 @@ expression : NUMBERINTEGER {installConstatInt($1);
 
                             
            | expression '-' expression {
-                            int type_exp = semanticCube[8][returntypebyByVirtualAddress($1)-1][returntypebyByVirtualAddress($3)-1];
+                            int type_exp = semanticCube[8]
+                                   [returntypebyByVirtualAddress($1)-1]
+                                   [returntypebyByVirtualAddress($3)-1];
                             if(type_exp == 9 ){
                                    printf("Error type expression");
+                                   errors++;
                             }{
                                   installGlobalVarTemps(type_exp);
-                                   generate_code(8,$1,$3,temporalsVarTable->virtualAddress);
+                                   generate_code(8,$1,$3,
+                                          temporalsVarTable->virtualAddress);
                                    $$ = temporalsVarTable->virtualAddress; 
                             }}
 
            | expression '*' expression {
-                            int type_exp = semanticCube[10][returntypebyByVirtualAddress($1)-1][returntypebyByVirtualAddress($3)-1];
+                            int type_exp = semanticCube[10]
+                                   [returntypebyByVirtualAddress($1)-1]
+                                   [returntypebyByVirtualAddress($3)-1];
                             if(type_exp == 9 ){
                                    printf("Error type expression");
                                    printf("%d Error type expression", type_exp);
-                                   printf("%d Error type expression", returntypebyByVirtualAddress($1));
+                                   printf("%d Error type expression", 
+                                          returntypebyByVirtualAddress($1));
+                                   errors++;
                             }{
-                                  installGlobalVarTemps(type_exp);
-                                   generate_code(5,$1,$3,temporalsVarTable->virtualAddress);
+                                   installGlobalVarTemps(type_exp);
+                                   generate_code(5,$1,$3,
+                                          temporalsVarTable->virtualAddress);
                                    $$ = temporalsVarTable->virtualAddress; 
                             }}
 
            | expression '/' expression {
-                            int type_exp = semanticCube[11][returntypebyByVirtualAddress($1)-1][returntypebyByVirtualAddress($3)-1];
+                            int type_exp = semanticCube[11]
+                                   [returntypebyByVirtualAddress($1)-1]
+                                   [returntypebyByVirtualAddress($3)-1];
                             if(type_exp == 9 ){
                                    printf("Error type expression");
+                                   errors++;
                             }{
                                   installGlobalVarTemps(type_exp);
-                                   generate_code(6,$1,$3,temporalsVarTable->virtualAddress);
+                                   generate_code(6,$1,$3,
+                                          temporalsVarTable->virtualAddress);
                                    $$ = temporalsVarTable->virtualAddress; 
                             }}
 
            | expression '&' expression {
-                            int type_exp = semanticCube[8][returntypebyByVirtualAddress($1)-1][returntypebyByVirtualAddress($3)-1];
+                            int type_exp = semanticCube[8]
+                                   [returntypebyByVirtualAddress($1)-1]
+                                   [returntypebyByVirtualAddress($3)-1];
                             if(type_exp == 9 ){
                                    printf("Error type expression");
+                                   errors++;
                             }{
-                                  installGlobalVarTemps(type_exp);
-                                   generate_code(15,$1,$3,temporalsVarTable->virtualAddress);
+                                   installGlobalVarTemps(type_exp);
+                                   generate_code(15,$1,$3,
+                                          temporalsVarTable->virtualAddress);
                                    $$ = temporalsVarTable->virtualAddress; 
                             }}
            | expression '|' expression {
-                            int type_exp = semanticCube[7][returntypebyByVirtualAddress($1)-1][returntypebyByVirtualAddress($3)-1];
+                            int type_exp = semanticCube[7]
+                                   [returntypebyByVirtualAddress($1)-1]
+                                   [returntypebyByVirtualAddress($3)-1];
                             if(type_exp == 9 ){
                                    printf("Error type expression");
+                                   errors++;
                             }{
                                   installGlobalVarTemps(type_exp);
-                                   generate_code(16,$1,$3,temporalsVarTable->virtualAddress);
+                                   generate_code(16,$1,$3,
+                                          temporalsVarTable->virtualAddress);
                                    $$ = temporalsVarTable->virtualAddress; 
                             }}
 
            | '(' expression ')' expression {
-                            int type_exp = semanticCube[10][returntypebyByVirtualAddress($2)-1][returntypebyByVirtualAddress($4)-1];
+                            int type_exp = semanticCube[10]
+                                   [returntypebyByVirtualAddress($2)-1]
+                                   [returntypebyByVirtualAddress($4)-1];
                             if(type_exp == 9 ){
                                    printf("Error type expression");
+                                   errors++;
                             }{
-                                  installGlobalVarTemps(type_exp);
-                                   generate_code(5,$2,$4,temporalsVarTable->virtualAddress);
+                                   installGlobalVarTemps(type_exp);
+                                   generate_code(5,$2,$4,
+                                          temporalsVarTable->virtualAddress);
                                    $$ = temporalsVarTable->virtualAddress; 
                             }}
            | expression '(' expression ')' {
-                            int type_exp = semanticCube[10][returntypebyByVirtualAddress($1)-1][returntypebyByVirtualAddress($3)-1];
+                            int type_exp = semanticCube[10]
+                                   [returntypebyByVirtualAddress($1)-1]
+                                   [returntypebyByVirtualAddress($3)-1];
                             if(type_exp == 9 ){
                                    printf("Error type expression");
+                                   errors++;
                             }{
-                                  installGlobalVarTemps(type_exp);
-                                   generate_code(5,$1,$3,temporalsVarTable->virtualAddress);
+                                   installGlobalVarTemps(type_exp);
+                                   generate_code(5,$1,$3,
+                                          temporalsVarTable->virtualAddress);
                                    $$ = temporalsVarTable->virtualAddress; 
                             }}
            | IDENTIFIER '(' auxexpression ')' {$$ = 6;}
@@ -569,10 +868,13 @@ if ( errors == 0 )
 print_code ();
 
 execute_the_code_cycle();
+eliminateall();
 
 }
 else{
        print_code ();
+
+       eliminateall();
 }
 }
 
