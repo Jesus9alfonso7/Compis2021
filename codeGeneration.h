@@ -96,6 +96,13 @@ struct proceduresDirectory *next;
 typedef struct proceduresDirectory proceduresDirectory;
 
 
+/*structure of the procedures Directory Stack */
+struct proceduresDirectoryStack
+{
+    struct proceduresDirectory *proceduresDirectoryTable;
+    struct proceduresDirectoryStack *next; 
+};
+typedef struct proceduresDirectoryStack proceduresDirectoryStack;
 
 /*structure of the global Variables */
 struct globalVariables
@@ -123,13 +130,19 @@ typedef struct localVariables localVariables;
 /*structure of the parameters array */
 struct parameters
 {
-int type; 
-/*int offset;  data offset */
+int type;
+int virtualAddress;
 struct parameters *next; 
 };
 typedef struct parameters parameters;
 
-
+/*structure of the parameters Stack */
+struct parametersStack
+{
+    struct parameters *actualParam;
+    struct parametersStack *next; 
+};
+typedef struct parametersStack parametersStack;
 
 /*structure of the constant talbe */
 struct constantTable
@@ -183,6 +196,10 @@ globalVariables *globalVariablesTable = (globalVariables *)0;
 proceduresDirectory *entryDirectory;
 proceduresDirectory *proceduresDirectoryTable = (proceduresDirectory *)0;
 
+proceduresDirectoryStack *proceduresStackTable = (proceduresDirectoryStack *)0;
+
+parametersStack *parametersStackTable = (parametersStack *)0;
+
 localVariables *entrylocalVariables;
 localVariables *localVariablesTable = (localVariables *)0;
 
@@ -215,6 +232,7 @@ void init_Semantic_Cube(){
  constantTableTable = NULL;
  tempDirectoryTable = NULL;
  temporalsVarTable = NULL;
+ parametersStackTable = NULL;
 
 
 
@@ -260,23 +278,17 @@ Operations for the structures
 
 proceduresDirectory * putNameProceduresDirectory (char *dir_name )
 {
-
-proceduresDirectory *ptr;
-ptr = (proceduresDirectory *) malloc (sizeof(proceduresDirectory)+1);
-
-ptr->name = (char *) malloc (strlen(dir_name)+1);
-strcpy (ptr->name,dir_name);
-
-
-ptr->next = (struct proceduresDirectory *)proceduresDirectoryTable;
-proceduresDirectoryTable = ptr;
-proceduresDirectoryTable->arrayParamsTypes[0] = 0; 
-proceduresDirectoryTable->arrayParamsTypes[1] = 0; 
-proceduresDirectoryTable->arrayParamsTypes[2] = 0; 
-proceduresDirectoryTable->codeinitial = 0;
-
-
-return ptr;
+    proceduresDirectory *ptr;
+    ptr = (proceduresDirectory *) malloc (sizeof(proceduresDirectory)+1);
+    ptr->name = (char *) malloc (strlen(dir_name)+1);
+    strcpy (ptr->name,dir_name);
+    ptr->next = (struct proceduresDirectory *)proceduresDirectoryTable;
+    proceduresDirectoryTable = ptr;
+    proceduresDirectoryTable->arrayParamsTypes[0] = 0; 
+    proceduresDirectoryTable->arrayParamsTypes[1] = 0; 
+    proceduresDirectoryTable->arrayParamsTypes[2] = 0; 
+    proceduresDirectoryTable->codeinitial = 0;
+    return ptr;
 }
 
 
@@ -353,6 +365,8 @@ void addTypeParamsTableProceduresDirectory (int paramType)
 
             
         }
+        //printf("%d: %d \n",localVariablesTable->virtualAddress,paramType);
+        proceduresDirectoryTable->finalParam->virtualAddress = localVariablesTable->virtualAddress;
     }
 
 }
@@ -364,13 +378,15 @@ void addTypeParamsTableProceduresDirectory (int paramType)
 
 proceduresDirectory * getProceduresDirectory (char *dir_name)
 {
-proceduresDirectory *ptr;
-for ( ptr = proceduresDirectoryTable;
-ptr != (proceduresDirectory *) 0;
-ptr = (proceduresDirectory *)ptr->next )
-if (strcmp (ptr->name,dir_name) == 0)
-return ptr;
-return NULL;
+    proceduresDirectory *ptr;
+    for (ptr = proceduresDirectoryTable;
+        ptr != (proceduresDirectory *) 0;
+        ptr = (proceduresDirectory *)ptr->next ){
+            if (strcmp (ptr->name,dir_name) == 0){
+                return ptr;
+            }
+    }
+    return NULL;
 }
 
 
@@ -443,9 +459,17 @@ void addVirtualAddressLocalVarTable (int type)
 {
 
     localVariablesTable->virtualAddress = localvirtualaddresscount[type];
-    localvirtualaddresscount[type] ++;
+    localvirtualaddresscount[type]++;
 
 }
+
+void resetVirtualAddressLocalVarTable ()
+{
+    localvirtualaddresscount[0] = 10000;
+    localvirtualaddresscount[1] = 11000;
+    localvirtualaddresscount[2] = 12000;
+}
+
 
 
 
@@ -1327,7 +1351,7 @@ typedef struct floats floats;
 
 struct chars{
     int len;
-    float arraychar[];
+    char arraychar[];
 };
 typedef struct chars chars;
 
@@ -1341,6 +1365,7 @@ struct memValues{
 typedef struct memValues memValues;
 
 struct stackMemValues{
+    int priority;
     struct memValues *memoryVar;
     struct stackMemValues *next;
 };
@@ -1357,6 +1382,7 @@ int globalvirtaddresscount[4];
 int localvirtaddresscount[4];
 int constvirtaddresscount[4];
 int tempvirtaddresscount[4];
+int errorocurred;
 
 /**************** se crea la memoria estatica de la maquina virtual *********/
 struct memValues * createMemory(struct memValues *s, int lenInt, int lenFloat, int lenChar){
@@ -1383,6 +1409,7 @@ struct stackMemValues * createLocalMemory(struct stackMemValues *s, int lenInt, 
     s = (struct stackMemValues *) malloc(sizeof(struct stackMemValues));
 
     s->memoryVar = createMemory(s->memoryVar, lenInt, lenFloat, lenChar);
+    s->priority=0;
     return s;
 
 }
@@ -1411,15 +1438,57 @@ void putTopLocalMemory(struct stackMemValues *s){
 void erraseLocalMemory(){
     stackMemValues * s;
     s = actualLocalMemory;
-    actualLocalMemory = actualLocalMemory->next;
+    if(actualLocalMemory != NULL){
+        actualLocalMemory = actualLocalMemory->next;
+        if(s->memoryVar != NULL){
+            if(s->memoryVar->structintergers != NULL){
+                free(s->memoryVar->structintergers);
+            }
+            if(s->memoryVar->structfloats != NULL){
+                free(s->memoryVar->structfloats);
+            }
+            if(s->memoryVar->structchars != NULL){
+                free(s->memoryVar->structchars);
+            }
+            free(s->memoryVar);
+        }
+        else{
+            errorocurred=1;
+            printf("Error in Virtual Machine : In Actual memory : Memory variables are Null \n");
+        }
+        free(s);
+    }
+    else{
+        errorocurred=1;
+        printf("Error in Virtual Machine : Actual memory is Null \n");
+    }
+    /*
     free(s);
+    s->memoryVar->structintergers
+    s->memoryVar->structfloats
+    s->memoryVar->structchars
+    s->memoryVar
+    s
+    */
+
+    
+
 }
 
 
 
 void changeNewToActual(){
-    newLocalMemory->next = actualLocalMemory;
-    actualLocalMemory = newLocalMemory;
+    stackMemValues * auxPtr;
+    if(newLocalMemory != NULL){
+        auxPtr = newLocalMemory->next;
+        newLocalMemory->next = actualLocalMemory;
+        actualLocalMemory = newLocalMemory;
+        newLocalMemory = auxPtr;
+    }
+    else{
+        errorocurred = 1;
+        printf("Error in Virtual Machine : New memory is Null \n");
+    }
 }
 
 
@@ -1586,9 +1655,8 @@ void modifyIntValue(int dir, int value, int typelocal){
     if(returnGlobalLocalConstanteTemporal(dir) == 4){
         if(30000 <= dir && dir < 31000){
             tempMemory->structintergers->arrayinterger[dir-30000] = value;
-            
-            printf("Value Modified : %d  \n" ,value);
             /*
+            printf("Value Modified : %d  \n" ,value);
             printf("Temp  : %d  \n" ,tempMemory->structintergers->arrayinterger[dir-30000]);
             */
         }
@@ -1736,6 +1804,8 @@ int initial;
 Registers
 -------------------------------------------------------------------------*/
 int programcounter;
+int priority;
+
 
 
 char ch;
@@ -1768,10 +1838,13 @@ char ch;
 
 
 
-    int errorocurred =0;
+    
     programcounter = 0;
     top = 0;
     initial = 0;
+    priority = 0;
+    errorocurred =0;
+
 
 
     /******* Se crean copias de los valores de los directorios 
@@ -1799,7 +1872,8 @@ char ch;
         switch(execution.op){
             /**/
 
-            case MAININIT : printf("Initialice Execution\n"); programcounter = execution.result ;
+            case MAININIT : printf("Initialice Execution\n"); 
+                            programcounter = execution.result ;
             break;
             case GOTO : programcounter = execution.result ;
             break;
@@ -1807,9 +1881,11 @@ char ch;
                                 programcounter = execution.result;
                              } ;
             break;
-            case GOSUB :GotoReturnStack[top] = programcounter; top++ ; if(execution.result >0){
-                                programcounter = execution.result;
-                             } ; changeNewToActual(); 
+            case GOSUB :GotoReturnStack[top] = programcounter; top++ ; 
+                        if(execution.result >0){
+                            programcounter = execution.result;
+                        } ; 
+                        changeNewToActual(); 
             break;
             case GOSUBSPECIAL :  ;
             break;
@@ -1970,10 +2046,12 @@ char ch;
                                     }
                                     if( (returntypebyByVirtualAddress(execution.arg1) == 3) & (returntypebyByVirtualAddress(execution.arg2) == 3) ) {
                                         if(returtcharValue(execution.arg1,1) == returtcharValue(execution.arg2,1)){
-                                            modifyCharValue(execution.result,1,1);
+                                            modifyIntValue(execution.result,1,1);
+                                            printf("True equality : %c \n",returtcharValue(execution.arg1,1));
+                                            printf("True equality : %c \n",returtcharValue(execution.arg2,1));
                                         }
                                         else{
-                                            modifyCharValue(execution.result,0,1);
+                                            modifyIntValue(execution.result,0,1);
                                         }
                                     } ; 
 
@@ -2209,33 +2287,35 @@ char ch;
             case ENDFUNCTION : erraseLocalMemory() ; programcounter = GotoReturnStack[top-1];top--;
             break;
             case PARAM : if( (returntypebyByVirtualAddress(execution.arg1) == returntypebyByVirtualAddress(execution.result) & returntypebyByVirtualAddress(execution.result)  == 1 ) )  {
-                                modifyIntValue(execution.result,returtIntValue(execution.arg1,3),3);
+                                modifyIntValue(execution.result,returtIntValue(execution.arg1,1),3);
+                                /*
                                 if(paramsActual == NULL){
                                     printf("error number of params on a method on execution");
                                     errorocurred = 1;
                                 }else{
                                 paramsActual = paramsActual->next;}
+                                */
                             }
                             else{
                                 if( (returntypebyByVirtualAddress(execution.arg1) == 2 & returntypebyByVirtualAddress(execution.result) == 2) ) {
-                                    float expval = returtfloatValue(execution.arg1,3);
+                                    float expval = returtfloatValue(execution.arg1,1);
                                     /*
                                     Antes tenia un 2 al final, se cambio por un 3
                                     */
                                     modifyFloatValue(execution.result,expval,3);
+                                    /*
                                     if(paramsActual == NULL){
                                         printf("error number of params on a method on execution");
                                         errorocurred = 1;
                                     }else{
                                     paramsActual = paramsActual->next;}
+                                    */
                                 }
                                 else{
                                     if( (returntypebyByVirtualAddress(execution.arg1) == 3 & returntypebyByVirtualAddress(execution.arg1) == 3) ) {
-                                        char expval = returtIntValue(execution.arg1,3);
+                                        char expval = returtcharValue(execution.arg1,1);
+                                        modifyCharValue(execution.result,expval,3);
                                         /*
-                                        Antes tenia un 2 al final, se cambio por un 3
-                                        */
-                                        modifyFloatValue(execution.result,expval,3);
                                         if(paramsActual == NULL){
                                             printf("error number of params on a method on execution");
                                             errorocurred = 1;
@@ -2243,6 +2323,7 @@ char ch;
                                         else{
                                         paramsActual = paramsActual->next;
                                             }
+                                        */
                                     }
                                     else{
                                         printf("error of type on params on a method on execution");
@@ -2265,8 +2346,20 @@ char ch;
                              ;
             break;
             case ERA :  sa = getProceduresDirectorybycodeinitial (execution.result);
-            pa = createLocalMemory(pa,sa->arrayParamsTypes[0],sa->arrayParamsTypes[1],sa->arrayParamsTypes[2]) ;
-            pa->next = actualLocalMemory; newLocalMemory = pa; paramsActual = sa->initialParam;
+            pa = createLocalMemory(pa,sa->arrayParamsTypes[0],sa->arrayParamsTypes[1],
+                sa->arrayParamsTypes[2]) ;
+            pa->next = newLocalMemory;
+            newLocalMemory = pa;
+            newLocalMemory->priority = priority;
+            priority++;
+
+            /*
+            paramsActual = sa->initialParam;
+            */
+            /*errors with params
+            tiene que ser una pila con nuevo y actual como la memoria local
+            se tiene q crear una nueva structura pila con params
+            */
             break;
             case VER :  ;
             break;

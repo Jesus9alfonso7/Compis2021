@@ -20,7 +20,8 @@ digit       [0-9]
 id          {letter}({letter}|{digit})*
 integer     {digit}+
 float       {digit}+\.{digit}+
-
+character       \'[A-Za-z]\'
+string       \"{letter}({letter}|{digit}|{delim})*\"
 %%
 
 
@@ -52,15 +53,16 @@ for         { return(FOR); }
 to          { return(TO); }
 program     { return(PROGRAM); }
 
-{letter}    {yylval.varchar = * yytext; return(LETTERCHAR); }
+{character} {yylval.varchar = (char *) strdup(yytext) ; return(LETTERCHAR); }
 {integer}   { yylval.intval = atoi (yytext) ;return(NUMBERINTEGER); }
 {float}     { yylval.varfloat = atof (yytext);return(NUMBERFLOAT); }
 
 
 {id}        {yylval.id = (char *) strdup(yytext) ;return(IDENTIFIER); }
+{string}    {yylval.varstring = (char *) strdup(yytext) ;return(WORDSTRING); }
 
 
-[ \t\n]+    /* blank, tab, new line: eat up all whitespace */
+[ \t\n]+    /* blank, tab, new line: eat up whitespace */
 . { return(yytext[0]); }
 
 

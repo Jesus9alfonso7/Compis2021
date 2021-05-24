@@ -15,6 +15,7 @@ Avanzado
 
 6-semi-Maquina virtual
 
+7-funciones normales
 
 
 
@@ -23,5 +24,7 @@ Falta
 
 1-Generacion de codigo para estatutos condicionales
 
-2-Probar funciones 
+2-Probar funciones recursivas
+
+3-Arreglos
 

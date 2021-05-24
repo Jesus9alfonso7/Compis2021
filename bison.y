@@ -96,6 +96,7 @@ if (s == NULL){
        /*
        free(localVariablesTable);
        */
+       resetVirtualAddressLocalVarTable();
        localVariablesTable = NULL;
        if(funType == 3){
               proceduresDirectory * a = putNameProceduresDirectory(dir_name);
@@ -327,48 +328,50 @@ eliminateall(){
        */
        
 
-       
-
-
-
-
-
-
-
-
-
-
 
 }
 
 
-installLocalVar(int paramType, char *name){
-int value = getLocalVarTableOnlylocal(name);
-if(value == 0 ){
-addTypeParamsProceduresDirectory ( paramType);
-addTypeParamsTableProceduresDirectory ( paramType);
-addLocalVarTable(name);
-addTypeLocalVarTable (paramType);
-addVirtualAddressLocalVarTable (paramType);
+installLocalVar(int paramType, char *name, int variables_parameters){
+       int value = getLocalVarTableOnlylocal(name);
+       if(value == 0 ){
+              addTypeParamsProceduresDirectory ( paramType);
+              addLocalVarTable(name);
+              addTypeLocalVarTable (paramType);
+              addVirtualAddressLocalVarTable (paramType);
+              if(variables_parameters == 2){
+                     addTypeParamsTableProceduresDirectory ( paramType);
+              }
+       }
+       else{
+              errors++;
+              printf("Error: Variable defined\n");
+       }
 }
-else{errors++;
-       printf("Error: Variable defined\n");
-}
-}
+
+
+
+
+
+
+
+
 
 %}
 %union  /* The Semantic Records */
 {
 int intval; /* Integer values  */
 float varfloat;
-char varchar;
+char *varchar;
 char *id; /* Identifiers */
+char *varstring;
 int typeid;
 int virtualMemory;
 };
 %token <id> IDENTIFIER 
 %token <intval> NUMBERINTEGER
 %token <varchar> LETTERCHAR 
+%token <varstring> WORDSTRING
 %token <varfloat> NUMBERFLOAT
 %type <typeid> type definitiontypefunctionssecondpart definitiontypefunctionsthirdpart
 
@@ -377,14 +380,14 @@ int virtualMemory;
 
 %token PROGRAM PROGRAMNAME SEMICOLON GREATERTHAN SMALLERTHAN EQUALITY NOTEQUALITY EQUAL UNITARYMINUS
 %token LESSTHANOREQUAL GREATERTHANOREQUAL MAIN RIGHTCURLYBRACKET VOID 
-%token LEFTCURLYBRACKET RIGHTSQUAREBRACKET LEFTSQUAREBRACKET RIGHTPARENTHESIS  WORDSTRING
+%token LEFTCURLYBRACKET RIGHTSQUAREBRACKET LEFTSQUAREBRACKET RIGHTPARENTHESIS 
 %token LEFTPARENTHESIS VAR GLOVALVAR COLON MODULE INTEGER FLOAT CHARAC COMMA MODULENAME THEN
 %token RETURNN READ WRITE IF ELSE DO WHILE FOR TO COMPARISON STRING AND OR SIGN 
 
 
 
 
-
+ /* %left ',' */
 
 %left '|'
 %left '&'
@@ -445,13 +448,13 @@ list_ids : IDENTIFIER { if(savevar_current_memory_global_local_const == 1){
                         }
                         if(savevar_current_memory_global_local_const == 2){
                             
-                            installLocalVar(current_type_var, $1);
+                            installLocalVar(current_type_var, $1,1);
                         } }
          |list_ids ',' IDENTIFIER { if(savevar_current_memory_global_local_const == 1){
                             installGlobalVar(current_type_var, $3);
                         }
                         if(savevar_current_memory_global_local_const == 2){
-                            installLocalVar(current_type_var, $3);
+                            installLocalVar(current_type_var, $3,1);
                         } } 
                      
          ;
@@ -515,8 +518,8 @@ parametersaux : parameters
               |
               ;
 
-parameters : type {current_type_var = $1;} ':' IDENTIFIER {installLocalVar(current_type_var,$4);}
-           | parameters ','  type {current_type_var = $3;} ':' IDENTIFIER {installLocalVar(current_type_var,$6);} 
+parameters : type {current_type_var = $1;} ':' IDENTIFIER {installLocalVar(current_type_var,$4,2);}
+           | parameters ','  type {current_type_var = $3;} ':' IDENTIFIER {installLocalVar(current_type_var,$6,2);} 
            ;
 
 
@@ -560,16 +563,58 @@ assignment : IDENTIFIER  '=' expression ';' {
        }
            ;
 
-callvoidmodule : IDENTIFIER '(' auxcallvoidmodule ')' ';'
+callvoidmodule : IDENTIFIER {proceduresDirectory *ptr = getProceduresDirectory($1);
+                            //printf("Enter call to void function \n");
+                        if(ptr == NULL){
+                               errors++;
+                               printf("Error Module does not exist \n");
+                        }
+                        else{
+                               if(ptr->type != 3){
+                                   errors++;
+                                   printf("Error Module is not a void funcion \n");
+                               }
+                               else{
+
+                                //printf("Enter call to void function - funcions exist\n");
+                                   generate_code(22, -1, -1,
+                                          getcodeinitialProceduresDirectory($1) );
+
+                                   parametersStack *auxPointer = (parametersStack *)0;
+                                   auxPointer = (parametersStack *) malloc (sizeof(parametersStack)+1);
+                                   auxPointer->actualParam = ptr->initialParam;
+
+                                   if(parametersStackTable == NULL ){
+                                           //printf("Enter call to void function - else - pst is null \n");
+                                          parametersStackTable =  auxPointer;
+                                   }
+                                   else{
+                                        //printf("Enter call to void function - else - pst is not null \n");
+
+                                          auxPointer->next = parametersStackTable;
+                                          parametersStackTable = auxPointer;
+                                   }
+                               }
+                        }
+                     } 
+              '(' auxParam ')' ';' { if(parametersStackTable != NULL){
+                                //printf("Enter out params void function - pst is not null \n");
+                                   if(parametersStackTable->actualParam != NULL){
+                                          errors++;
+                                          printf("Error No arrived to last parameter \n");
+                                      }
+                                      else{
+                                          //printf("Enter out params void function - pst is not null - pst->ap is null\n");
+                                          proceduresDirectory *ptr = getProceduresDirectory($1);
+                                          generate_code(3, -1, -1,
+                                                 ptr->codeinitial);
+                                          parametersStackTable = parametersStackTable->next;
+                                          //printf("Enter out params void function - pst is not null -  out\n");
+                                      }
+                                   }
+                            }
                ;
 
-auxcallvoidmodule : auxcallvoidmoduledps
-                  | 
-                  ;
-
-auxcallvoidmoduledps : expression
-                     | auxcallvoidmoduledps ',' expression 
-                      ;
 
 toread : READ '(' auxtoread ')' ';'
        ;
@@ -612,8 +657,8 @@ noconditional : FOR IDENTIFIER '=' expression TO expression DO '{' statutes '}'
 expression : NUMBERINTEGER {installConstatInt($1); 
               constantTable * value = getConstTableByInt($1); 
               $$ = value->virtualAddress;}
-           | LETTERCHAR {installConstatChar($1); 
-              constantTable * value = getConstTableByChar($1); 
+           | LETTERCHAR {installConstatChar($1[1]); 
+              constantTable * value = getConstTableByChar($1[1]); 
               $$ = value->virtualAddress;}
            | IDENTIFIER {   if (getLocalVarTable($1) == 0){
                                    printf("Identifier no defined : %s \n", $1); errors++;
@@ -813,7 +858,7 @@ expression : NUMBERINTEGER {installConstatInt($1);
                                           temporalsVarTable->virtualAddress);
                                    $$ = temporalsVarTable->virtualAddress; 
                             }}
-
+           /* 
            | '(' expression ')' expression {
                             int type_exp = semanticCube[10]
                                    [returntypebyByVirtualAddress($2)-1]
@@ -840,15 +885,113 @@ expression : NUMBERINTEGER {installConstatInt($1);
                                           temporalsVarTable->virtualAddress);
                                    $$ = temporalsVarTable->virtualAddress; 
                             }}
-           | IDENTIFIER '(' auxexpression ')' {$$ = 6;}
-           | '(' expression ')' {$$ = $2;}           
-           ;
+       
+           */
+           | '(' expression ')' {$$ = $2;}
 
-auxexpression : expression
-              | expression ',' auxexpression
-              | /*empty*/
+
+
+           | IDENTIFIER {proceduresDirectory *ptr = getProceduresDirectory($1);
+                            //printf("Enter call to function \n");
+                        if(ptr == NULL){
+                               errors++;
+                               printf("Error Module does not exist \n");
+                        }
+                        else{
+                               if(ptr->type == 3){
+                                   errors++;
+                                   printf("Error Module is not a type funcion \n");
+                               }
+                               else{
+                                //printf("Enter call to function - funcions exist\n");
+                                   generate_code(22, -1, -1,
+                                          getcodeinitialProceduresDirectory($1) );
+                                  
+                                   parametersStack *auxPointer = (parametersStack *)0;
+                                   auxPointer = (parametersStack *) malloc (sizeof(parametersStack)+1);
+                                   auxPointer->actualParam = ptr->initialParam;
+
+                                   if(parametersStackTable == NULL ){
+                                           //printf("Enter call to function - else - pst is null \n");
+                                          parametersStackTable =  auxPointer;
+                                          //printf("Enter call to function - else - pst is null out\n");
+                                   }
+                                   else{
+                                        //printf("Enter call to function - else - pst is not null \n");
+
+                                          auxPointer->next = parametersStackTable;
+                                          parametersStackTable = auxPointer;
+                                          printf("Enter call to function - else - pst is not null  out\n");
+                                   }
+                               }
+                        }
+                     } 
+              '(' auxParam ')' { if(parametersStackTable != NULL){
+                               // printf("Enter out params  function - pst is not null \n");
+                                   if(parametersStackTable->actualParam != NULL){
+                                          errors++;
+                                          printf("Error No arrived to last parameter \n");
+                                      }
+                                      else{
+                                        //  printf("Enter out params  function - pst is not null - pst->ap is null\n");
+                                          proceduresDirectory *ptr = getProceduresDirectory($1);
+                                          generate_code(3, -1, -1,
+                                                 ptr->codeinitial);
+                                          parametersStackTable = parametersStackTable->next;
+                                        //  printf("Enter out params  function - pst is not null -  out\n");
+                                          $$ = getGlobalVarTable($1);
+                                      }
+                                   }
+                            }
+ 
+           ;
+           
+auxParam      :      auxexpression
+              |      /*empty*/
               ;
 
+auxexpression : expression {if(parametersStackTable->actualParam != NULL){
+                            //printf("Enter call to auxexpression - pst->ap is not null \n");
+                            if(returntypebyByVirtualAddress($1)-1 == 
+                                          parametersStackTable->actualParam->type ){
+                                   //printf("Enter call to auxexpression - pst->ap is not null - same type \n");
+                                   generate_code(21, $1, -1,
+                                        parametersStackTable->actualParam->virtualAddress);
+                                   parametersStackTable->actualParam = 
+                                                 parametersStackTable->actualParam->next;
+                            }
+                            else{
+                                   errors++;
+                                   printf("Error Different type in a parameter \n");
+                            } 
+                            }
+                            else{
+                                   errors;
+                                   printf("Error Maximun number of parameters arrived \n");
+                            }
+                            }
+              | auxexpression ','  expression
+                            {if(parametersStackTable->actualParam != NULL){
+                            //printf("Enter call to auxexpression , expression - pst->ap is not null \n");
+                            if(returntypebyByVirtualAddress($3)-1 == 
+                                          parametersStackTable->actualParam->type ){
+                                   //printf("Enter call to auxexpression , expression - pst->ap is not null - same type \n");
+                                   generate_code(21, $3, -1,
+                                        parametersStackTable->actualParam->virtualAddress);
+                                   parametersStackTable->actualParam = 
+                                                 parametersStackTable->actualParam->next;
+                            }
+                            else{
+                                   errors++;
+                                   printf("Error Different type in a parameter \n");
+                            } 
+                            }
+                            else{
+                                   errors;
+                                   printf("Error Maximun number of parameters arrived \n");
+                            }
+                            }
+              ;
 
 
 
