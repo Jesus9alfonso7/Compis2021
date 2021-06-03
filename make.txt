@@ -1,3 +1,62 @@
+/////BISON WITH GRAPHICS
+bison -d bison.y
+gcc -c bison.tab.c
+flex flex.l
+gcc -c lex.yy.c
+gcc -o fin bison.tab.o lex.yy.o -lGL -lGLU -lglut -lm
+./fin
+
+gcc ex.c -lGL -lGLU -lglut -lm
+./a.out
+
+
+program CircleAndLine ; 
+var {float : newx1, newy1, radio;} 
+
+main(){
+	special penDown();
+	newx1 = 140.0;
+	newy1 = 130.0;
+	special drawLine(newx1,newy1);
+
+	special penUp();
+	newx1 = 340.0;
+	newy1 = 130.0;
+	special drawLine(newx1,newy1);
+	
+	special penDown();
+	radio = 200.0;
+	special drawCircle(radio);
+}
+
+
+
+
+
+	special penUp();
+	newx1 = 240.0;
+	newy1 = 30.0;
+	special drawLine(newx1,newy1);
+
+	special penDown();
+	radio = 200.0;
+	special drawCircle(radio);
+
+
+factorf = veri[1] == veri[2];
+
+
+
+
+
+
+
+
+
+
+
+
+
 /////BISON
 bison -d bison.y
 gcc -c bison.tab.c
@@ -5,6 +64,289 @@ flex flex.l
 gcc -c lex.yy.c
 gcc -o fin bison.tab.o lex.yy.o
 ./fin
+
+
+program fibonacciRecursivo ; 
+var {int : array[5], factorf, total ;char : veri[3];} 
+
+void fibonacci( int : total ){
+	total = 13;
+	write (total);
+}
+
+
+main(){
+	array[4] = 30;
+	veri[1] = 'b';
+	veri[2] = 'b';
+	factorf= veri[1] == veri[2];
+	total = 12;
+	fibonacci(total);
+	write (factorf);
+}
+
+
+
+
+program fibonacciRecursivo ; 
+var {int : val;}
+main(){
+	val = 39;
+	val = -val;
+	write (val);
+}
+
+
+
+
+
+
+
+
+/** done
+LETTERCHAR
+Falta write con string example "hola"
+read con todo
+arreglar negativos. //printf("%d \n Entero de string",atoi("-1") );
+
+arreglos. ver, = y print para result y para arg1 y arg2 todos
+/** 
+
+/**semidone 
+---arreglos. ver, = y print para result y para arg1 y arg2 todos
+
+falta parameter
+
+falta en el bison las demas op
+
+***///
+
+
+
+---funciones especiales,  solo crear los codigos
+
+
+Operaciones con tipos diferentes float con int, float con char, float con bool, int con todos los demas bool con todos los demas, char con todos los demas.
+
+
+Probar cosas como 1/0, 0/0. 
+Modificar los print de errores
+
+arreglar los tamaños de las direcciones virtuales.
+
+verify errors
+
+
+
+
+si se llega al maximo numero de var de un tipo/contexto
+
+q pasa si no se inicializan las variables
+
+for ---- noconditional : FOR 
+
+/*** quitar '(' expression ')' expression 
+/*** quitar expression '(' expression ')'
+/*** quitar IDENTIFIER '(' auxexpression ')'
+/*** poner '(' expression ')' y talvez cambiar la assosiatividad
+'(' expression ')' expression 
+expression '(' expression ')'
+IDENTIFIER '(' auxexpression ')'
+
+
+
+
+/******* Errors finished *******/
+cambiar/arreglar parentesis
+if,while
+do,probar while
+
+if concatenado
+
+los locales y globales deben tener sus propios temporales,
+para que pueda existir recurcion en las funciones
+funciones recursivas,
+En el gosub se tiene que hacer una asignacion a un temporal
+para que el los globales no afte la recurcion.
+parche guadalupano
+
+Falta revisar funciones normales,
+in bison change params, add virtual address and
+add a pila, maybe create a new pila for the parameters
+change actuals and news in virtual machine, 2 pilas and
+add in new the flag tope, to know when to star in actuals instead of
+news.
+ 
+error en el constante 0 / ARREGLAR EL addConstantTable()
+
+/******* Passed *******/
+
+program hola ; var {char: c1; float : f1; int : ad, bool1;} 
+void module mailo( int : ad );{
+var {float : f1; int : bool1;} 
+ad = 10; 
+write (ad);} 
+int module mas( int : ad );{ad = 10; return (4);} 
+main(){
+ad = (1+1)+(1+3)*(1+4)-((1)+(4)+(5))+mas(5);
+write (ad);
+}
+
+
+
+
+c1 = 'a';
+bool1 = 5;
+bool1 = 6;
+bool1 = 7;
+bool1 = 8;
+bool1 = 0;
+write (bool1);
+
+
+
+c1 = 'a';
+bool1 = 'a' == 'b';
+if(bool1){
+write (2);
+}
+else {
+write (3);
+}
+
+
+bool1 = 1;
+bool1 = 'a' == 'b';
+
+
+
+program hola ; var {float : f1; int : ad, bool1;} 
+void module mailo( int : ad );{
+var {float : f1; int : bool1;} 
+ad = 10; write (ad);} 
+int module mas( int : ad );{ad = 10; return (4);} 
+main(){
+mailo(4);
+ad = (1+1)+(1+3)*(1+4)-((1)+(4)+(5))+mas(5);
+write (ad);
+}
+
+
+
+
+ad = mas(5);
+write (ad);
+ad = (1+1)+(1+3)*(1+4)-((1)+(4)+(5))+mas(5);
+write (ad);
+
+ad = (1+1)+(1+3)*(1+4)-((1)+(4)+(5));
+write (ad);
+ad = (1+1)+(1+3)+(1+4)-((1)+(4)+(5));
+write (ad);
+ad = (1+1)+(1+3)+(1+4)+(1)+(4)+(5);
+write (ad);
+
+
+bool1 = 1 > 2;
+write (bool1);
+bool1 = 10 > 10.0;
+write (bool1);
+bool1 = 1 > 2;
+write (bool1);
+bool1 = 3 > 2;
+write (bool1, ad);
+bool1 = 1 > 2 | 4 > 3;
+write (bool1);
+bool1 = 1*4 > 2/2 | 4 > 3;
+write (bool1);
+bool1 = 1 > 2 | 4 < 3;
+write (bool1);
+bool1 = 1 > 2 & 4 > 3;
+write (bool1);
+bool1 = 1 > 2 & 4 < 3;
+write (bool1);
+bool1 = 1 < 2 & 4 > 3;
+write (bool1);
+bool1 = 1 < 2 & 4 > 3 | 7 > 5 == 6 | 5 != 6 & 4 >= 3 & 78 <= 1 ;
+write (bool1);
+1 y 1 o 1 == 6 o 1 y 1 y 0
+1 o 0 o 0
+1
+
+bool1 = 1 < 2 & 4 < 3 | 7 > 5 == 6 | 5 != 6 & 4 >= 3 & 78 <= 1 ;
+write (bool1);
+bool1 = 5 != 6;
+write (bool1);
+bool1 = 6 != 6;
+write (bool1);
+bool1 = 6 == 6;
+write (bool1);
+bool1 = 4 == 6;
+write (bool1);
+bool1 = 1 | 0;
+write (bool1);
+bool1 = 1 | 1;
+write (bool1);
+bool1 = 0 | 0;
+write (bool1);
+bool1 = 0 & 0;
+write (bool1);
+bool1 = 0 & 1;
+write (bool1);
+bool1 = 1 & 1;
+write (bool1);
+
+program hola ; var {float : f1; int : ad, bool1;} 
+void module mailo( int : ad );{ad = 10;} 
+int module mas( int : ad );{ad = 10; return (4);} 
+main(){
+bool1 = 1 & 1;
+write (bool1);
+}
+
+
+program hola ; var {int : ad;} 
+main(){
+ad = 4 + 4 * 5 + 3 * 10 ( 56 - 5 ) ;
+write (ad, ad, ad); }
+
+
+program hola ; var {float : fUno; int : ad;} 
+void module mailo( int : ad );{ad = 10;} 
+int module mas( int : ad );{ad = 10; return (4);} 
+main(){
+ad = 4 + 4 * 5 + 3 * 10 ( 56 - 5 ) ;
+write (ad, ad, ad);
+fUno = 4.0 + 4.0 * 5.0 + 3.0 * 10.0 ( 56.0 - 5.0 ) ;
+write (fUno, fUno, fUno); 
+}
+
+program hola ; var {int : ad;} 
+void module mailo( int : ad );{ad = 10;} 
+int module mas( int : ad );{ad = 10; return (4);} 
+main(){
+ad = 4 + 4 * 5 + 3 * 10 ( 56 - 5 ) ;
+write (ad, ad, ad); }
+
+
+/******* Passed End *******/
+
+
+
+program hola ; var {int : ad;} 
+void module mailo( int : ad );{ad = 10;} 
+int module mas( int : ad );{ad = 10; return (4);} 
+main(){
+ad = 4 + 4 * 5 + 3 * 10 ( 56 ) ; }
+
+
+program hola ;   main(){ } 
+
+
+
+///////////////////////////////////////////////////
+///////////////////////////////////////////////////
+///////////////////////////////////////////////////
 
 /////SIMPLE
 bison -d Simple.y
@@ -14,8 +356,6 @@ gcc -c lex.yy.c
 gcc -o fin Simple.tab.o lex.yy.o
 ./fin
 
-
-/**Run the library of graphics*/
 /////GRAPHICS
 gcc -o ex ex.c -lGL -lGLU -lglut -lm
 ./ex
@@ -27,3 +367,534 @@ flex Simple.lex
 gcc -c lex.yy.c
 gcc -o fin Simple.tab.o lex.yy.o -lGL -lGLU -lglut -lm
 ./fin
+
+///////////////////////////////////////////////////
+///////////////////////////////////////////////////
+///////////////////////////////////////////////////
+
+program hola ;   main(){ } 
+
+program hola ;  int module mailo();{} main(){ } 
+
+program hola ;  int module mailo();{return (mailo());} main(){ }
+
+program hola ;  void module mailo();{} main(){ } 
+
+program hola ;  void module mailo( int : ad );{} main(){ } 
+
+program hola ;  void module mailo( int : a );{} main(){ } 
+
+
+program hola ; var {int : ad;} void module mailo( int : ad );{ad = 10;} main(){ }
+
+program hola ; var {int : ad;} void module mailo( int : ad );{ad = 10;} main(){ } 
+
+program hola ;  void module mailo( int : ad );{ad = 10;} main(){ } 
+
+
+program hola ;  void module mailo( int : ad );{var {int : ad;} a = 10;} main(){ } 
+
+program hola ;  int module mailo(int ad){}  main(){ a = 10;} 
+
+
+program hola ; var {int : ad;} main(){ ad = 10;}
+
+program hola ; var {int : ad;} main(){ }
+
+program hola ; var {int : ad , ad1, ad2
+; float : qw, qw1 ; char : as,as1;} main(){ }
+
+
+
+
+program factorialRecursivo ; 
+var { int entrada;} 
+int factorial module (int factor)
+{
+return factor*factorial(factor-1);
+} 
+main()
+{ 
+read(entrada);
+entrada = factorial(entrada);
+write(entrada);
+
+}
+end
+
+
+
+program factorial ; 
+var { int entrada, salida;} 
+
+main()
+{ 
+read(entrada);
+salida=1;
+
+do
+{
+salida = entrada*(entrada-1);
+entrada = entrada - 1;
+}
+while( entrada > 1)
+
+}
+end
+
+
+
+
+
+
+/************* Code posible
+
+/*
+           | IDENTIFIER {proceduresDirectory *ptr = getProceduresDirectory($1);
+                        if(ptr == NULL){
+                               errors++;
+                               printf("Error Module does not exist \n");
+                        }
+                        else{
+                               if(ptr->type == 3){
+                                   errors++;
+                                   printf("Error Module is not a type funcion \n");
+                               }
+                               else{
+                                   generate_code(22, -1, -1,
+                                          getcodeinitialProceduresDirectory($1) );
+
+                                   parametersStack *auxPointer = (parametersStack *)0;
+                                   auxPointer = ptr->initialParam;
+
+                                   if(parametersStackTable == NULL ){
+                                          parametersStackTable->actualParam =  auxPointer;
+                                   }
+                                   else{
+                                          auxPointer->next = parametersStackTable;
+                                          parametersStackTable = auxPointer;
+                                   }
+                               }
+                        }
+                     } 
+              '(' ')' { if(parametersStackTable->actualParam != NULL){
+                            errors++;
+                            printf("Error No arrived to last parameter \n");
+                       }
+                       else{
+                            proceduresDirectory *ptr = getProceduresDirectory($1);
+                            generate_code(3, -1, -1,
+                                   ptr->codeinitial);
+                            parametersStackTable = parametersStackTable->next;
+
+                       }
+                      }
+*/        
+
+
+
+
+
+
+
+
+
+
+
+ /*changed all
+                                   installGlobalVarTemps(type_exp);
+                                   generate_code(11,$1,$3,
+                                          temporalsVarTable->virtualAddress);
+                                   $$ = temporalsVarTable->virtualAddress; */
+
+
+
+
+
+               /*
+
+auxcallvoidmodule : auxcallvoidmoduledps
+                  | 
+                  ;
+
+auxcallvoidmoduledps : expression
+                     | auxcallvoidmoduledps ',' expression 
+                      ;
+                      */      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+/********************************************************                
+/*****************************************************
+/*****************
+                     
+program factorialRecursivo ; 
+var {int : factor;} 
+
+int factorial( int : factor ){
+	var {int : total;}
+	total=0;
+
+	if(factor <= 1){
+		total = 1;
+	}
+	else {
+		total = factor*factorial(factor-1);
+	}
+	return (total);
+}
+
+main(){
+	factor=10;
+	factor = factorial(factor);
+	write (factor);
+} 
+
+
+
+
+
+/**
+
+program factorialCiclico ; 
+var {int : factor, total;} 
+
+main(){
+	factor=10;
+	total=1;
+
+	while(factor > 0){
+		total = factor*total;
+		factor = factor-1;
+	}
+	write (total);
+}                     
+                      
+                      
+                      
+                      
+/********************************************************                
+/*****************************************************
+/*****************
+
+
+
+
+program fibonacciRecursivo ; 
+var {int : factorf, total;} 
+
+int fibonacci( int : factorf ){
+	var {int : total;}
+	total=0;
+	if(factorf <= 1){
+		total = factorf;
+	}
+	else {
+		total = fibonacci(factorf-1) +fibonacci(factorf-2);
+	}
+	return (total);
+}
+
+
+main(){
+	factorf=10;
+	total = fibonacci(factorf);
+	write (total);
+}
+
+
+
+
+/***
+
+
+                          
+program fibonacciCiclico ; 
+var {int : factorf, total, valor1, valor2;} 
+
+main(){
+	factorf=10;
+	total=0;
+	
+	valor1=0;
+	valor2=1;
+	if(factorf == 0){
+		write (total);
+	}
+	else{
+		total = valor2;
+		while(factorf > 1){
+			total = valor2 + valor1;
+			valor1 = valor2;
+			valor2 = total;
+			factorf = factorf-1;
+		}
+		write (total);
+	}
+}                      
+
+
+/********************************************************                
+/*****************************************************
+/*****************
+
+
+
+
+
+void eliminateall(){
+       printf("starting eliminate \n");
+       if (globalProceduresDirectoryTable != NULL){
+              printf("global \n");  
+              free(globalProceduresDirectoryTable->name);
+              while(globalProceduresDirectoryTable->globalMemory != NULL){
+                     globalVariables *ptr;
+                     ptr = globalProceduresDirectoryTable->globalMemory->next;
+                     free(globalProceduresDirectoryTable->globalMemory->name);
+                     free(globalProceduresDirectoryTable->globalMemory);
+                     globalProceduresDirectoryTable->globalMemory = ptr;
+                     
+              }
+              printf("global 1 while \n"); 
+              while(globalProceduresDirectoryTable->globalTemporals != NULL){
+                     temporalVariables *ptr;
+                     ptr = globalProceduresDirectoryTable->globalTemporals->next;
+                     free(globalProceduresDirectoryTable->globalTemporals->name);
+                     free(globalProceduresDirectoryTable->globalTemporals);
+                     globalProceduresDirectoryTable->globalTemporals = ptr;
+                     
+              }
+              free(globalProceduresDirectoryTable);
+              globalProceduresDirectoryTable =   NULL;
+       }  
+       /**/
+       printf("eliminate globalProceduresDirectoryTable \n");
+       
+
+
+       while(proceduresDirectoryTable != NULL){
+              proceduresDirectory *ptr;
+              ptr = proceduresDirectoryTable->next;
+              free(proceduresDirectoryTable->name);
+
+              while(proceduresDirectoryTable->localMemory != NULL){
+                     localVariables *ptr_aux;
+                     ptr_aux = proceduresDirectoryTable->localMemory->next;
+                     free(proceduresDirectoryTable->localMemory->name);
+                     free(proceduresDirectoryTable->localMemory);
+                     proceduresDirectoryTable->localMemory = ptr_aux;
+              }
+              while(proceduresDirectoryTable->localTemporals != NULL){
+                     temporalVariables *ptr;
+                     ptr = proceduresDirectoryTable->localTemporals->next;
+                     free(proceduresDirectoryTable->localTemporals->name);
+                     free(proceduresDirectoryTable->localTemporals);
+                     proceduresDirectoryTable->localTemporals = ptr;
+                     
+              }
+
+              while(proceduresDirectoryTable->initialParam != NULL){
+                     parameters *ptr_aux;
+                     ptr_aux = proceduresDirectoryTable->initialParam->next;
+                     free(proceduresDirectoryTable->initialParam);
+                     proceduresDirectoryTable->initialParam = ptr_aux;
+              }
+
+              free(proceduresDirectoryTable);
+              proceduresDirectoryTable = ptr;
+       }
+       proceduresDirectoryTable =   NULL;
+       
+       /**/
+       printf("eliminate proceduresDirectoryTable \n");
+       
+
+
+
+       while(constantDirectory != NULL){
+              constantsDirectory *ptr = NULL;
+
+              //Ints
+              while(constantDirectory->constantIntMemory != NULL){
+                     constantIntVars *ptr_aux;
+                     ptr_aux = constantDirectory->constantIntMemory->next;
+                     free(constantDirectory->constantIntMemory);
+                     constantDirectory->constantIntMemory = ptr_aux;
+              }
+              //FLoats
+              while(constantDirectory->constantFloatMemory != NULL){
+                     constantFloatVars *ptr_aux;
+                     ptr_aux = constantDirectory->constantFloatMemory->next;
+                     free(constantDirectory->constantFloatMemory);
+                     constantDirectory->constantFloatMemory = ptr_aux;
+              }
+              //Chars
+              while(constantDirectory->constantCharMemory != NULL){
+                     constantCharVars *ptr_aux;
+                     ptr_aux = constantDirectory->constantCharMemory->next;
+                     free(constantDirectory->constantCharMemory);
+                     constantDirectory->constantCharMemory = ptr_aux;
+              }
+              //String
+              //printf("eliminate string \n");
+              while(constantDirectory->constantStringMemory != NULL){
+                     constantStringVars *ptr_aux;
+                     ptr_aux = constantDirectory->constantStringMemory->next;
+                     if(constantDirectory->constantStringMemory->stringValue != NULL){
+                     //printf("eliminate string %s \n",constantDirectory->constantStringMemory->stringValue );
+                     free(constantDirectory->constantStringMemory->stringValue);
+                     }
+                     //printf("eliminate constantDirectory STRING\n");
+                     free(constantDirectory->constantStringMemory);
+                     //printf("eliminateD  \n");
+                     constantDirectory->constantStringMemory = ptr_aux;
+              }
+              //printf("eliminate constantDirectory 1 \n");
+              free(constantDirectory);
+              //printf("eliminateD constantDirectory 2 \n");
+              constantDirectory = ptr;
+              //printf("eliminateD constantDirectory 3 \n");
+       }
+       constantDirectory =   NULL;
+       /**/
+       printf("eliminate constantDirectory \n");
+       
+
+
+       /********* Eliminate the dynamic memory of the code generator ***********/
+
+
+       while(operandsStackActual != NULL){
+              operandsStack *ptr;
+              ptr = operandsStackActual->next;
+              free(operandsStackActual);
+              operandsStackActual = ptr;
+       }
+       operandsStackActual = NULL;
+
+       while(operatorsActual != NULL){
+              operators *ptr;
+              ptr = operatorsActual->next;
+              free(operatorsActual);
+              operatorsActual = ptr;
+       }
+       operatorsActual = NULL;
+       /*
+
+       printf("Eliminate the dynamic memory of the code generator\n");
+       */
+
+
+       /********* Eliminate the dynamic memory of the Virtual Machine ***********/
+       
+       while(actualLocalMemory != NULL){
+              stackMemValues *ptr;
+              ptr = actualLocalMemory->next;
+              if(actualLocalMemory->memoryVar != NULL){
+                     if(actualLocalMemory->memoryVar->structintergers != NULL)
+                     free(actualLocalMemory->memoryVar->structintergers);
+                     if(actualLocalMemory->memoryVar->structfloats != NULL)
+                     free(actualLocalMemory->memoryVar->structfloats);
+                     if(actualLocalMemory->memoryVar->structchars != NULL)
+                     free(actualLocalMemory->memoryVar->structchars);
+
+                     if(actualLocalMemory->memoryVar->tempStructIntergers != NULL)
+                     free(actualLocalMemory->memoryVar->tempStructIntergers);
+                     if(actualLocalMemory->memoryVar->tempStructFloats != NULL)
+                     free(actualLocalMemory->memoryVar->tempStructFloats);
+                     if(actualLocalMemory->memoryVar->tempStructChars != NULL)
+                     free(actualLocalMemory->memoryVar->tempStructChars);
+                     if(actualLocalMemory->memoryVar->tempStructPointers != NULL)
+                     free(actualLocalMemory->memoryVar->tempStructPointers);
+
+                     free(actualLocalMemory->memoryVar);
+              }
+              free(actualLocalMemory);
+              actualLocalMemory = ptr;
+       }
+       /**/
+       actualLocalMemory = NULL;
+
+       printf("Eliminate actualLocalMemory\n");
+       
+       while(newLocalMemory != NULL){
+              stackMemValues *ptr;
+              ptr = newLocalMemory->next;
+
+              if(newLocalMemory->memoryVar != NULL){
+                     if(newLocalMemory->memoryVar->structintergers != NULL)
+                     free(newLocalMemory->memoryVar->structintergers);
+                     if(newLocalMemory->memoryVar->structfloats != NULL)
+                     free(newLocalMemory->memoryVar->structfloats);
+                     if(newLocalMemory->memoryVar->structchars != NULL)
+                     free(newLocalMemory->memoryVar->structchars);
+
+                     if(newLocalMemory->memoryVar->tempStructIntergers != NULL)
+                     free(newLocalMemory->memoryVar->tempStructIntergers);
+                     if(newLocalMemory->memoryVar->tempStructFloats != NULL)
+                     free(newLocalMemory->memoryVar->tempStructFloats);
+                     if(newLocalMemory->memoryVar->tempStructChars != NULL)
+                     free(newLocalMemory->memoryVar->tempStructChars);
+                     if(newLocalMemory->memoryVar->tempStructPointers != NULL)
+                     free(newLocalMemory->memoryVar->tempStructPointers);
+
+                     free(newLocalMemory->memoryVar);
+              }
+
+              free(newLocalMemory);
+              newLocalMemory = ptr;
+       }
+       newLocalMemory = NULL;
+
+       /**/
+       printf("Eliminate newLocalMemory\n");
+       
+       //globalMemory = NULL;
+        /*
+       if (globalMemory != NULL){ 
+
+              if(globalMemory->structintergers != NULL)
+                     free(globalMemory->structintergers);
+
+              if(globalMemory->structfloats != NULL)
+                     free(globalMemory->structfloats);
+
+              if(globalMemory->structchars != NULL)
+                     free(globalMemory->structchars);
+
+
+              if(globalMemory->tempStructIntergers != NULL)
+                     free(globalMemory->tempStructIntergers);
+       
+              if(globalMemory->tempStructFloats != NULL)
+                     free(globalMemory->tempStructFloats);
+     
+              if(globalMemory->tempStructChars != NULL)
+                     free(globalMemory->tempStructChars);
+                
+              if(globalMemory->tempStructPointers != NULL)
+                     free(globalMemory->tempStructPointers);
+              
+
+              free(globalMemory);
+              globalMemory = NULL;
+       }
+
+      
+       printf("Eliminate the dynamic memory of the Virtual Machine\n");
+       */
+
+
+}

@@ -21,7 +21,7 @@ id          {letter}({letter}|{digit})*
 integer     {digit}+
 float       {digit}+\.{digit}+
 character       \'[A-Za-z]\'
-string       \"{letter}({letter}|{digit}|{delim})*\"
+string       \"({letter}|{digit}|{delim})*\"
 %%
 
 
@@ -52,6 +52,11 @@ return      { return(RETURNN); }
 for         { return(FOR); }
 to          { return(TO); }
 program     { return(PROGRAM); }
+penUp       { return(SFPENUP); }
+penDown     { return(SFPENDOWN); }
+drawLine    { return(SFDRAWLINE); }
+drawCircle  { return(SFDRAWCIRCLE); }
+special     { return(SPECIAL); }
 
 {character} {yylval.varchar = (char *) strdup(yytext) ; return(LETTERCHAR); }
 {integer}   { yylval.intval = atoi (yytext) ;return(NUMBERINTEGER); }

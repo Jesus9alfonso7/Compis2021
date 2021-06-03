@@ -1,0 +1,20 @@
+program fibonacciRecursivo ; 
+var {int : factorf, total;} 
+
+int fibonacci( int : factorf ){
+	var {int : total;}
+	total=0;
+	if(factorf <= 1){
+		total = factorf;
+	}
+	else {
+		total = fibonacci(factorf-1) +fibonacci(factorf-2);
+	}
+	return (total);
+}
+
+main(){
+	factorf=10;
+	total = fibonacci(factorf);
+	write (total);
+}

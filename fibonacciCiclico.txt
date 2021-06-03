@@ -1,0 +1,27 @@
+program fibonacciCiclico ; 
+var {int : factorf, total, valor1, valor2;} 
+
+void fibonacci(){
+	factorf=10;
+	total=0;
+	
+	valor1=0;
+	valor2=1;
+	if(factorf == 0){
+		write (total);
+	}
+	else{
+		total = valor2;
+		while(factorf > 1){
+			total = valor2 + valor1;
+			valor1 = valor2;
+			valor2 = total;
+			factorf = factorf-1;
+		}
+		write (total);
+	}
+}
+
+main(){
+	fibonacci();
+}

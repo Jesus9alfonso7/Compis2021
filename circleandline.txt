@@ -1,0 +1,18 @@
+program CircleAndLine ; 
+var {float : newx1, newy1, radio;} 
+
+main(){
+	special penDown();
+	newx1 = 140.0;
+	newy1 = 130.0;
+	special drawLine(newx1,newy1);
+
+	special penUp();
+	newx1 = 340.0;
+	newy1 = 130.0;
+	special drawLine(newx1,newy1);
+	
+	special penDown();
+	radio = 200.0;
+	special drawCircle(radio);
+}

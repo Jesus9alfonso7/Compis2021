@@ -1,6 +1,10 @@
 #include <string.h> 
 #include <stdlib.h>
 #include <stdio.h>
+
+#include<GL/glut.h>
+#include<math.h>
+#define pi 3.142857
 /*********************************
 
 
@@ -57,63 +61,64 @@
 
 
 /*
-
-globalProceduresDirectory *entryGlobalDirectory;
-
-globalProceduresDirectory *globalProceduresDirectoryTable = (globalProceduresDirectory *)0;
-int countFunctions=0;
-
-
 */
-int semanticCube[13][3][3]; 
-
-/*structure of the global procedures Directory */
 
 
+int semanticCube[14][3][3]; 
+int errors=0;
+
+/*Estructura para el directorio global*/
 struct globalProceduresDirectory
 {
-char *name; 
-int type; 
-int arrayParamsTypes[3]; 
-struct globalVariables *globalMemory;
-struct globalProceduresDirectory *next;
+    char *name; 
+    int type; 
+    int arrayParamsTypes[3];
+    int temporalsCount[5];
+    struct temporalVariables *globalTemporals;
+    struct globalVariables *globalMemory;
+    struct globalProceduresDirectory *next;
 };
 typedef struct globalProceduresDirectory globalProceduresDirectory;
 
-
-/*structure of the procedures Directory */
+/*Estructura para el directorio local */
 struct proceduresDirectory
 {
-char *name; 
-int codeinitial;
-int type; 
-int arrayParamsTypes[3]; 
-struct parameters *initialParam; 
-struct parameters *finalParam;
-struct localVariables *localMemory;
-struct proceduresDirectory *next; 
+    char *name; 
+    int codeinitial;
+    int type; 
+    int arrayParamsTypes[3];
+
+    int temporalsCount[5];
+    struct temporalVariables *localTemporals; 
+    struct parameters *initialParam; 
+    struct parameters *finalParam;
+    struct localVariables *localMemory;
+
+    struct proceduresDirectory *next; 
 };
 typedef struct proceduresDirectory proceduresDirectory;
 
-
-/*structure of the procedures Directory Stack */
-struct proceduresDirectoryStack
-{
-    struct proceduresDirectory *proceduresDirectoryTable;
-    struct proceduresDirectoryStack *next; 
-};
-typedef struct proceduresDirectoryStack proceduresDirectoryStack;
 
 /*structure of the global Variables */
 struct globalVariables
 {
 char *name;
 int virtualAddress;
-int type; 
+int type;
+int dimArray;
 struct globalVariables *next; 
 };
 typedef struct globalVariables globalVariables;
 
+/*structure of the temporal Variables */
+struct temporalVariables
+{
+char *name;
+int virtualAddress;
+int type; 
+struct temporalVariables *next; 
+};
+typedef struct temporalVariables temporalVariables;
 
 /*structure of the local Variables */
 struct localVariables
@@ -121,6 +126,8 @@ struct localVariables
 char *name; 
 int virtualAddress;
 int type;
+int dimArray;
+/*no used*/
 struct globalVariables *globalVars;
 struct localVariables *next; 
 };
@@ -144,101 +151,117 @@ struct parametersStack
 };
 typedef struct parametersStack parametersStack;
 
-/*structure of the constant talbe */
-struct constantTable
-{
-char *name;
-int intValue;
-/*
-int *intValuebool;
-*/
-char charValue;
-float floatValue;
-int type;
-int virtualAddress;
-struct constantTable *next; 
-};
-typedef struct constantTable constantTable;
 
-/*structure of the constants */
+
+/*-----------------Constantes---------------*/
+
+/*Estructura para strings*/
+struct constantStringVars
+{
+    char *stringValue;
+    int type;
+    int virtualAddress;
+    struct constantStringVars *next; 
+};
+typedef struct constantStringVars constantStringVars;
+
+/*Estructura para los constantes chars*/
+struct constantCharVars
+{
+    char charValue;
+    int type;
+    int virtualAddress;
+    struct constantCharVars *next; 
+};
+typedef struct constantCharVars constantCharVars;
+
+
+/*Estructura para los constantes flotantes*/
+struct constantFloatVars
+{
+    float floatValue;
+    int type;
+    int virtualAddress;
+    struct constantFloatVars *next; 
+};
+typedef struct constantFloatVars constantFloatVars;
+
+/*Estructura para los constantes enteros*/
+struct constantIntVars
+{
+    int intValue;
+    int type;
+    int virtualAddress;
+    struct constantIntVars *next; 
+};
+typedef struct constantIntVars constantIntVars;
+
+/*Estructura de las constantes*/
 struct constantsDirectory
 {
-char *name; 
-int type; 
-int arrayParamsTypes[3]; 
-struct constantTable *constantTableMemory;
-struct constantsDirectory *next;  
+    int arrayParamsTypes[4]; 
+
+    struct constantIntVars *constantIntMemory;
+    struct constantFloatVars *constantFloatMemory;
+    struct constantCharVars *constantCharMemory;
+    struct constantStringVars *constantStringMemory;
 };
 typedef struct constantsDirectory constantsDirectory;
 
-/*structure of the temps talbe */
-struct tempVar
-{
-char *name; 
-int virtualAddress;
-int type;
-struct tempVar *next; 
-};
-typedef struct tempVar tempVar;
 
 
 /*----------------------------------------------------------------
 
 -----------------------------------------------------------------  */
-globalProceduresDirectory *entryGlobalDirectory;
+
 globalProceduresDirectory *globalProceduresDirectoryTable = (globalProceduresDirectory *)0;
 
-globalVariables *entryglobalVariables;
-globalVariables *globalVariablesTable = (globalVariables *)0;
-
-
-
-proceduresDirectory *entryDirectory;
 proceduresDirectory *proceduresDirectoryTable = (proceduresDirectory *)0;
-
-proceduresDirectoryStack *proceduresStackTable = (proceduresDirectoryStack *)0;
-
 parametersStack *parametersStackTable = (parametersStack *)0;
 
-localVariables *entrylocalVariables;
+
+
+constantsDirectory *constantDirectory = (constantsDirectory *)0;
+
+constantIntVars *consIntMemory;
+constantFloatVars *consFloatMemory;
+constantCharVars *consCharMemory;
+constantStringVars *consStringMemory;
+
+globalVariables *globalVariablesTable = (globalVariables *)0;
 localVariables *localVariablesTable = (localVariables *)0;
 
+temporalVariables *lastLocalTemporal = (temporalVariables *) 0;
+temporalVariables *lastGlobalTemporal = (temporalVariables *) 0;
 
-constantsDirectory *entryConstantDirectory;
-constantsDirectory *constantDirectory = (constantsDirectory *)0;
-constantTable *entryconstantTable;
-constantTable *constantTableTable = (constantTable *)0;
-
-
-
-globalProceduresDirectory *entrytempDirectory;
-globalProceduresDirectory *tempDirectoryTable = (globalProceduresDirectory *)0;
-
-globalVariables *entrygtemporals;
-globalVariables *temporalsVarTable = (globalVariables *)0;
-
-/*
-tempVar *entrytempVar;
-tempVar *tempVarTable = (tempVar *)0;
-*/
 
 void init_Semantic_Cube(){
 
- globalProceduresDirectoryTable = NULL;
- globalVariablesTable = NULL;
- proceduresDirectoryTable = NULL;
- localVariablesTable = NULL;
- constantDirectory = NULL;
- constantTableTable = NULL;
- tempDirectoryTable = NULL;
- temporalsVarTable = NULL;
- parametersStackTable = NULL;
+    globalProceduresDirectoryTable = NULL;
+    globalVariablesTable = NULL;
+    proceduresDirectoryTable = NULL;
+    localVariablesTable = NULL;
+
+    constantDirectory = NULL;
+
+
+    consIntMemory  = NULL;
+    consFloatMemory = NULL;
+    consCharMemory = NULL;
+    consStringMemory = NULL;
+
+
+
+    lastLocalTemporal = NULL;
+    lastGlobalTemporal = NULL;
+
+    parametersStackTable = NULL;
 
 
 
 
 
-    int auxsemanticCube[13][3][3] = {{{0 , 0, 0}, {0 , 0, 0}, { 0, 0, 0}}, {{0 , 0, 0}, {0 , 0, 0}, { 0, 0, 0}}, 
+    int auxsemanticCube[14][3][3] = {{{0 , 0, 0}, {0 , 0, 0}, { 0, 0, 0}}, {{0 , 0, 0}, {0 , 0, 0}, { 0, 0, 0}}, 
 
                               {{ 0, 0, 9}, { 0, 0, 9}, { 9, 9, 0}}, {{ 0, 0, 9}, { 0, 0, 9}, { 9, 9, 0}}, 
                               {{ 0, 0, 9}, { 0, 0, 9}, { 9, 9, 0}}, {{ 0, 0, 9}, { 0, 0, 9}, { 9, 9, 0}},
@@ -248,8 +271,8 @@ void init_Semantic_Cube(){
                               {{ 0, 1, 9}, { 1, 1, 9}, { 9, 9, 9}}, {{ 0, 1, 9}, { 1, 1, 9}, { 9, 9, 9}}, 
                               {{ 0, 1, 9}, { 1, 1, 9}, { 9, 9, 9}}, {{ 0, 1, 9}, { 1, 1, 9}, { 9, 9, 9}},
 
-                              {{ 9, 9, 9}, { 9, 9, 9}, { 9, 9, 9}}}; 
-    for(int i=0;i<13;i++){
+                              {{ 9, 9, 9}, { 9, 9, 9}, { 9, 9, 9}}, {{ 0, 9, 9}, { 9, 1, 9}, { 9, 9, 9}}  }; 
+    for(int i=0;i<14;i++){
         for(int j=0;j<3;j++){
             for(int k=0;k<3;k++){
                 semanticCube[i][j][k] = auxsemanticCube[i][j][k];
@@ -260,8 +283,15 @@ void init_Semantic_Cube(){
 
 int globalvirtualaddresscount[3] = {1000,2000,3000};
 int localvirtualaddresscount[3] = {10000,11000,12000};
-int constvirtualaddresscount[3] = {20000,21000,22000};
+int constvirtualaddresscount[4] = {20000,21000,22000,23000};
 int tempvirtualaddresscount[3] =  {30000,31000,32000};
+
+/*                               Int   Float Char  String  PointerInt  Pointerfloat PointerChar  Limit      */
+/*                                0      1      2      3      4            5           6            7*/
+int globalTemporalsCount[8] = {  5000,  6000,  7000,  8000,  9000,       9300,        9600,       10000};
+int fixGlobalTemporals[8] =   {  5000,  6000,  7000,  8000,  9000,       9300,        9600,       10000};
+int localTemporalsCount[8] =  { 15000, 16000, 17000, 18000, 19000,      19300,       19600,       20000};
+int fixLocalTemporals[8] =    { 15000, 16000, 17000, 18000, 19000,      19300,       19600,       20000};
 /*----------------------------------------------------------------
 
 -----------------------------------------------------------------  */
@@ -315,33 +345,8 @@ void addTypeParamsProceduresDirectory (int paramType)
         proceduresDirectoryTable->arrayParamsTypes[2] +=1;
     }
 }
-/*
-void addTypeParamsTableProceduresDirectory (int *paramType)
-{
-    if (*paramType == 0 | *paramType == 1 | *paramType == 2 ){
-        if(proceduresDirectoryTable->initialParam == NULL){
 
-            proceduresDirectoryTable->initialParam = (struct parameters *) malloc (sizeof(parameters));
-            
-            proceduresDirectoryTable->initialParam->type = (int *) malloc (sizeof(int));
-            *//*
-            proceduresDirectoryTable->initialParam->type = paramType;
-            proceduresDirectoryTable->finalParam = (struct parameters *) proceduresDirectoryTable->initialParam ;
 
-        }
-        else{
-            parameters *ptr;
-            ptr = (struct parameters *) malloc (sizeof(parameters));
-            ptr->type = paramType;
-            proceduresDirectoryTable->finalParam->next = (struct parameters *) ptr ;
-            proceduresDirectoryTable->finalParam = (struct parameters *) ptr ;
-
-            
-        }
-    }
-
-}
-*/
 /*----------------Params-----------------*/
 void addTypeParamsTableProceduresDirectory (int paramType)
 {
@@ -425,9 +430,6 @@ void addLocalVarTable (char *name)
         if(proceduresDirectoryTable->localMemory == NULL){
 
             proceduresDirectoryTable->localMemory = (struct localVariables *) malloc (sizeof(localVariables)+1);
-            /*
-            proceduresDirectoryTable->initialParam->type = (int *) malloc (sizeof(int));
-            */
             proceduresDirectoryTable->localMemory->name = name;
             localVariablesTable = (struct localVariables *) proceduresDirectoryTable->localMemory;
         }
@@ -436,9 +438,6 @@ void addLocalVarTable (char *name)
             ptr = (struct localVariables *) malloc (sizeof(localVariables)+1);
             ptr->name = name;
             ptr->next = (struct localVariables *) localVariablesTable;
-            /*
-            ptr->next = (struct localVariables *) proceduresDirectoryTable->localMemory;
-            */
             proceduresDirectoryTable->localMemory = (struct localVariables *) ptr ;
             localVariablesTable = (struct localVariables *) ptr ;
 
@@ -475,95 +474,129 @@ void resetVirtualAddressLocalVarTable ()
 
 int getLocalVarTableOnlylocal(char *name)
 {
-int foundFlag = 0;
-localVariables *ptr;
-if(localVariablesTable != NULL){
-for ( ptr = localVariablesTable;
-ptr != (localVariables *) 0;
-ptr = (localVariables *)ptr->next )
-if (strcmp (ptr->name,name) == 0){
-foundFlag = ptr->virtualAddress;
-}
-if (foundFlag != 0)
-{
-    return foundFlag;
-}
-else{
+    int foundFlag = 0;
+    localVariables *ptr;
+    if(localVariablesTable != NULL){
+        for ( ptr = localVariablesTable; ptr != (localVariables *) 0; 
+                            ptr = (localVariables *)ptr->next )
+            if (strcmp (ptr->name,name) == 0){
+                foundFlag = ptr->virtualAddress;
+            }
+        if (foundFlag != 0)
+        {
+            return foundFlag;
+        }
+        else{
+            return 0;
+        }
+    }
     return 0;
-}}
-return 0;
 }
 
 int getGlobalVarTable(char *name)
 {
-int foundFlag = 0;
-globalVariables *ptr;
-if(globalVariablesTable != NULL){
-
-for ( ptr = globalVariablesTable;
-ptr != (globalVariables *) 0;
-ptr = (globalVariables *)ptr->next ){
-
-if (strcmp (ptr->name,name) == 0){
-return ptr->virtualAddress;}
-
-}
-}
-return 0;
+    int foundFlag = 0;
+    globalVariables *ptr;
+    if(globalVariablesTable != NULL){
+        for ( ptr = globalVariablesTable; ptr != (globalVariables *) 0;
+                                        ptr = (globalVariables *)ptr->next ){
+            if (strcmp (ptr->name,name) == 0){
+                return ptr->virtualAddress;
+            }
+        }
+    }
+    return 0;
 }
 
 int getLocalVarTable(char *name)
 {
-int foundFlag = 0;
-localVariables *ptr;
-if(localVariablesTable != NULL){
-for ( ptr = localVariablesTable;
-ptr != (localVariables *) 0;
-ptr = (localVariables *)ptr->next ){
-if (strcmp (ptr->name,name) == 0){
-foundFlag = ptr->virtualAddress;
-}}
-if (foundFlag != 0)
-{
-    return foundFlag;
-}
-else{
-    foundFlag = getGlobalVarTable(name);
-    return foundFlag;
-}
-}
-else{
-foundFlag = getGlobalVarTable(name);
-return foundFlag;
-}
+    int foundFlag = 0;
+    localVariables *ptr;
+    if(localVariablesTable != NULL){
+        for ( ptr = localVariablesTable; ptr != (localVariables *) 0;
+                                        ptr = (localVariables *)ptr->next ){
+            if (strcmp (ptr->name,name) == 0){
+                foundFlag = ptr->virtualAddress;
+            }
+        }
+        if (foundFlag != 0)
+        {
+            return foundFlag;
+        }
+        else{
+            foundFlag = getGlobalVarTable(name);
+            return foundFlag;
+        }
+    }
+    else{
+        foundFlag = getGlobalVarTable(name);
+        return foundFlag;
+    }
 }
 
 int getbyVyrtualAddresLocalVarTable(int vir)
 {
-int foundFlag = 0;
-localVariables *ptr;
-if(localVariablesTable != NULL){
-for ( ptr = localVariablesTable;
-ptr != (localVariables *) 0;
-ptr = (localVariables *)ptr->next )
-if ( ptr->virtualAddress == vir){
-foundFlag = ptr->virtualAddress;
+    int foundFlag = 0;
+    localVariables *ptr;
+    if(localVariablesTable != NULL){
+        for ( ptr = localVariablesTable;  ptr != (localVariables *) 0;
+                                            ptr = (localVariables *)ptr->next )
+            if ( ptr->virtualAddress == vir){
+                foundFlag = ptr->virtualAddress;
+            }
+        if (foundFlag != 0)
+        {
+            return foundFlag;
+        }
+        else{
+            foundFlag = 0;
+            return foundFlag;
+        }
+    }
+    return 0;
 }
-if (foundFlag != 0)
+
+
+int isArrayGlobalVar(char *name)
 {
-    return foundFlag;
-}
-else{
-    foundFlag = 0;
-    return foundFlag;
-}
-}
-return 0;
+    int foundFlag = -2;
+    globalVariables *ptr;
+    if(globalVariablesTable != NULL){
+        for ( ptr = globalVariablesTable; ptr != (globalVariables *) 0;
+                                        ptr = (globalVariables *)ptr->next ){
+            if (strcmp (ptr->name,name) == 0){
+                return ptr->dimArray;
+            }
+        }
+    }
+    return -2;
 }
 
-
-
-
+int isArrayLocalVar(char *name)
+{
+    int foundFlag = -2;
+    localVariables *ptr;
+    if(localVariablesTable != NULL){
+        for ( ptr = localVariablesTable; ptr != (localVariables *) 0;
+                                        ptr = (localVariables *)ptr->next ){
+            if (strcmp (ptr->name,name) == 0){
+                foundFlag = ptr->dimArray;
+            }
+        }
+        if (foundFlag != -2)
+        {
+            return foundFlag;
+        }
+        else{
+            foundFlag = isArrayGlobalVar(name);
+            return foundFlag;
+        }
+    }
+    else{
+        foundFlag = isArrayGlobalVar(name);
+        return foundFlag;
+    }
+}
 
 
 /*----------------------------------------------------------------
@@ -572,21 +605,23 @@ Globals Procedure
 ------------------------------------------------------------------ */
 globalProceduresDirectory * CrateGlobalProceduresDirectory (char *dir_name)
 {
+    globalProceduresDirectory *ptr;
+    ptr = (globalProceduresDirectory *) malloc (sizeof(globalProceduresDirectory)+1);
+    ptr->name = (char *) malloc (strlen(dir_name)+1);
+    strcpy (ptr->name,dir_name);
 
-globalProceduresDirectory *ptr;
-ptr = (globalProceduresDirectory *) malloc (sizeof(globalProceduresDirectory)+1);
+    ptr->next = (struct globalProceduresDirectory *)globalProceduresDirectoryTable;
+    globalProceduresDirectoryTable = ptr;
+    globalProceduresDirectoryTable->arrayParamsTypes[0]= 0;
+    globalProceduresDirectoryTable->arrayParamsTypes[1]= 0;
+    globalProceduresDirectoryTable->arrayParamsTypes[2]= 0;
+    globalProceduresDirectoryTable->temporalsCount[0]= 0;
+    globalProceduresDirectoryTable->temporalsCount[1]= 0;
+    globalProceduresDirectoryTable->temporalsCount[2]= 0;
+    globalProceduresDirectoryTable->temporalsCount[3]= 0;
+    globalProceduresDirectoryTable->temporalsCount[4]= 0;
 
-ptr->name = (char *) malloc (strlen(dir_name)+1);
-strcpy (ptr->name,dir_name);
-
-
-ptr->next = (struct globalProceduresDirectory *)globalProceduresDirectoryTable;
-globalProceduresDirectoryTable = ptr;
-globalProceduresDirectoryTable->arrayParamsTypes[0]= 0;
-globalProceduresDirectoryTable->arrayParamsTypes[1]= 0;
-globalProceduresDirectoryTable->arrayParamsTypes[2]= 0;
-
-return ptr;
+    return ptr;
 }
 
 
@@ -628,9 +663,6 @@ void addGlobalVarTable (char *name)
         if(globalProceduresDirectoryTable->globalMemory == NULL){
 
             globalProceduresDirectoryTable->globalMemory = (struct globalVariables *) malloc (sizeof(globalVariables)+1);
-            /*
-            globalProceduresDirectoryTable->initialParam->type = (int *) malloc (sizeof(int));
-            */
             globalProceduresDirectoryTable->globalMemory->name = name;
             globalVariablesTable = (struct globalVariables *) globalProceduresDirectoryTable->globalMemory;
         }
@@ -639,14 +671,9 @@ void addGlobalVarTable (char *name)
             ptr = (struct globalVariables *) malloc (sizeof(globalVariables)+1);
             ptr->name = name;
             ptr->next = (struct globalVariables *) globalVariablesTable;
-            /*
-            ptr->next = (struct globalVariables *) proceduresDirectoryTable->globalMemory;
-            */
             globalProceduresDirectoryTable->globalMemory = (struct globalVariables *) ptr ;
             globalVariablesTable = (struct globalVariables *) ptr ;
-
     }
-
 }
 
 
@@ -654,18 +681,14 @@ void addGlobalVarTable (char *name)
 
 void addTypeGlobalVarTable (int type)
 {
-
     globalVariablesTable->type = type;
-
 }
 
 
 void addVirtualAddressGlobalVarTable (int type)
 {
-
     globalVariablesTable->virtualAddress = globalvirtualaddresscount[type];
     globalvirtualaddresscount[type] ++;
-
 }
 
 
@@ -675,46 +698,46 @@ void addVirtualAddressGlobalVarTable (int type)
 Temporals Procedure
 ------------------------------------------------------------------
 ------------------------------------------------------------------ */
-globalProceduresDirectory * CrateGlobalProceduresDirectoryTemps ()
+
+/* New */
+void addGlobalTemporalsCount (globalProceduresDirectory *global, int tempType)
 {
-
-globalProceduresDirectory *ptr;
-ptr = (globalProceduresDirectory *) malloc (sizeof(globalProceduresDirectory)+1);
-
-
-
-ptr->next = (struct globalProceduresDirectory *)tempDirectoryTable;
-tempDirectoryTable = ptr;
-
-return ptr;
+    if (tempType == 0 ){
+        global->temporalsCount[0] +=1;
+    }
+    if (tempType == 1 ){
+        global->temporalsCount[1] +=1;
+    }
+    if (tempType == 2 ){
+        global->temporalsCount[2] +=1;
+    }
+    if (tempType == 3 ){
+        global->temporalsCount[3] +=1;
+    }
+    if (tempType == 4 ){
+        global->temporalsCount[4] +=1;
+    }
+}
+void addLocalTemporalsCount (proceduresDirectory *local, int tempType)
+{
+    if (tempType == 0 ){
+        local->temporalsCount[0] +=1;
+    }
+    if (tempType == 1 ){
+        local->temporalsCount[1] +=1;
+    }
+    if (tempType == 2 ){
+        local->temporalsCount[2] +=1;
+    }
+    if (tempType == 3 ){
+        local->temporalsCount[3] +=1;
+    }
+    if (tempType == 4 ){
+        local->temporalsCount[4] +=1;
+    }
 }
 
 
-void addTypeGlobalsParamsProceduresDirectoryTemps (int paramType)
-{
-    if (paramType == 0 ){
-        tempDirectoryTable->arrayParamsTypes[0] +=1;
-    }
-    if (paramType == 1 ){
-        tempDirectoryTable->arrayParamsTypes[1] +=1;
-    }
-    if (paramType == 2 ){
-        tempDirectoryTable->arrayParamsTypes[2] +=1;
-    }
-}
-
-int getTypeGlobalsParamsProceduresDirectoryTemps (int paramType)
-{
-    if (paramType == 0 ){
-        return tempDirectoryTable->arrayParamsTypes[0];
-    }
-    if (paramType == 1 ){
-        return tempDirectoryTable->arrayParamsTypes[1];
-    }
-    if (paramType == 2 ){
-        return tempDirectoryTable->arrayParamsTypes[2];
-    }
-}
 
 
 
@@ -723,99 +746,134 @@ Temporals
 ------------------------------------------------------------------
 ------------------------------------------------------------------ */
 
-
-void addGlobalVarTableTemporals (char *name)
+/* Se agrega una nueva variable en los globales temporales con su tipo y dirección virtual */
+void addGlobalTemporals (int type)
 {
-
-        if(tempDirectoryTable->globalMemory == NULL){
-
-            tempDirectoryTable->globalMemory = (struct globalVariables *) malloc (sizeof(globalVariables)+1);
-            /*
-            tempDirectoryTable->initialParam->type = (int *) malloc (sizeof(int));
-            */
-            tempDirectoryTable->globalMemory->name = name;
-            temporalsVarTable = (struct globalVariables *) tempDirectoryTable->globalMemory;
-        }
-        else{
-            globalVariables *ptr;
-            ptr = (struct globalVariables *) malloc (sizeof(globalVariables)+1);
-            ptr->name = name;
-            ptr->next = (struct globalVariables *) temporalsVarTable;
-            /*
-            ptr->next = (struct globalVariables *) proceduresDirectoryTable->globalMemory;
-            */
-            tempDirectoryTable->globalMemory = (struct globalVariables *) ptr ;
-            temporalsVarTable = (struct globalVariables *) ptr ;
-
+    temporalVariables *ptr;
+    ptr = (struct temporalVariables *) malloc (sizeof(temporalVariables)+1);
+    ptr->next = (struct temporalVariables *) lastGlobalTemporal;
+    globalProceduresDirectoryTable->globalTemporals = (struct temporalVariables *) ptr ;
+    lastGlobalTemporal = (struct temporalVariables *) ptr ;
+    
+    lastGlobalTemporal->type = type;
+    //printf("%d \n", globalTemporalsCount[type]);
+    //printf("%d \n", type);
+    /* Se verifica que todavía hay espacio en el tipo específico de los temporales */
+    if( globalTemporalsCount[type] < fixGlobalTemporals[type+1] ){
+        lastGlobalTemporal->virtualAddress = globalTemporalsCount[type];
+        globalTemporalsCount[type] ++;
     }
-
-}
-
-void addTemporals ()
-{
-
-        if(tempDirectoryTable->globalMemory == NULL){
-            tempDirectoryTable->globalMemory = (struct globalVariables *) malloc (sizeof(globalVariables)+1);
-            temporalsVarTable = (struct globalVariables *) tempDirectoryTable->globalMemory;
-        }
-        else{
-            globalVariables *ptr;
-            ptr = (struct globalVariables *) malloc (sizeof(globalVariables)+1);
-            ptr->next = (struct globalVariables *) temporalsVarTable;
-            tempDirectoryTable->globalMemory = (struct globalVariables *) ptr ;
-            temporalsVarTable = (struct globalVariables *) ptr ;
-
+    else{
+        errors++;
+        printf("Error : Memory limit reached at Global Temporals");
     }
-
+    //printf("%d \n", globalTemporalsCount[type]);
 }
 
-
-void addTypeGlobalVarTableTemporals (int  type)
+void addGlobalTemporalPointer (int type)
 {
-
-    temporalsVarTable->type =  type;
-
+    temporalVariables *ptr;
+    ptr = (struct temporalVariables *) malloc (sizeof(temporalVariables)+1);
+    ptr->next = (struct temporalVariables *) lastGlobalTemporal;
+    globalProceduresDirectoryTable->globalTemporals = (struct temporalVariables *) ptr ;
+    lastGlobalTemporal = (struct temporalVariables *) ptr ;
+    
+    lastGlobalTemporal->type = type;
+    type = 4;
+    
+    /* Se verifica que todavía hay espacio en el tipo específico de los temporales */
+    if( globalTemporalsCount[type] < fixGlobalTemporals[type+1] ){
+        lastGlobalTemporal->virtualAddress = globalTemporalsCount[type];
+        globalTemporalsCount[type] ++;
+    }
+    else{
+        errors++;
+        printf("Error : Memory limit reached at Global Temporals");
+    }
 }
 
-void addVirtualAddressGlobalVarTableTemporals (int type)
+void addLocalTemporalPointer (int type)
 {
+    temporalVariables *ptr;
+    ptr = (struct temporalVariables *) malloc (sizeof(temporalVariables)+1);
+    ptr->next = (struct temporalVariables *) lastLocalTemporal;
+    proceduresDirectoryTable->localTemporals = (struct temporalVariables *) ptr ;
+    lastLocalTemporal = (struct temporalVariables *) ptr ;
 
-    temporalsVarTable->virtualAddress = tempvirtualaddresscount[type];
-    tempvirtualaddresscount[type] ++;
-
+    lastLocalTemporal->type =  type;
+    type = 4;
+    
+    if( localTemporalsCount[type] < fixLocalTemporals[type+1] ){
+        lastLocalTemporal->virtualAddress = localTemporalsCount[type];
+        localTemporalsCount[type] ++;
+    }
+    else{
+        errors++;
+        printf("Error : Memory limit reached at Local Temporals");
+    }
 }
 
-
-globalVariables * getGlobalVarTableTemporals(char *name)
+/*Se agrega una nueva variable en los locales temporales */
+void addLocalTemporals (int type)
 {
-int foundFlag = 0;
-globalVariables *ptr;
-for ( ptr = temporalsVarTable;
-ptr != (globalVariables *) 0;
-ptr = (globalVariables *)ptr->next )
-if (strcmp (ptr->name,name) == 0)
-return ptr;
-return NULL;
+    temporalVariables *ptr;
+    ptr = (struct temporalVariables *) malloc (sizeof(temporalVariables)+1);
+    ptr->next = (struct temporalVariables *) lastLocalTemporal;
+    proceduresDirectoryTable->localTemporals = (struct temporalVariables *) ptr ;
+    lastLocalTemporal = (struct temporalVariables *) ptr ;
+
+    lastLocalTemporal->type =  type;
+    
+    if( localTemporalsCount[type] < fixLocalTemporals[type+1] ){
+        lastLocalTemporal->virtualAddress = localTemporalsCount[type];
+        localTemporalsCount[type] ++;
+    }
+    else{
+        errors++;
+        printf("Error : Memory limit reached at Local Temporals");
+    }
 }
 
 
+
+
+/*                               Int   Float Char  String  PointerInt  Pointerfloat PointerChar  Limit      */
+/*                                0      1      2      3      4            5           6            7
+int globalTemporalsCount[8] = {  5000,  6000,  7000,  8000,  9000,       9300,        9600,       10000};
+int fixGlobalTemporals[8] =   {  5000,  6000,  7000,  8000,  9000,       9300,        9600,       10000};
+int localTemporalsCount[8] =  { 15000, 16000, 17000, 18000, 19000,      19300,       19600,       20000};
+int fixLocalTemporals[8] =    { 15000, 16000, 17000, 18000, 19000,      19300,       19600,       20000};
+
+*/
+int isPointer(int dir){
+    if((dir >=fixGlobalTemporals[4] && dir < fixGlobalTemporals[5]  ) | (dir >=fixLocalTemporals[4] && dir < fixLocalTemporals[5]  ) ){
+        return 1;
+    }
+    if((dir >=fixGlobalTemporals[5] && dir < fixGlobalTemporals[6]  ) | (dir >=fixLocalTemporals[5] && dir < fixLocalTemporals[6]  ) ){
+        return 2;
+    }
+    if((dir >=fixGlobalTemporals[6] && dir < fixGlobalTemporals[7]  ) | (dir >=fixLocalTemporals[6] && dir < fixLocalTemporals[7]  ) ){
+        return 3;
+    }
+    return 0;
+
+}
 /*----------------------------------------------------------------
 Constant Procedure
 ------------------------------------------------------------------
 ------------------------------------------------------------------ */
-constantsDirectory * CrateConstantDirectory ()
-{
+constantsDirectory * CrateConstantDirectory (){
+    
+    constantsDirectory *ptr;
+    ptr = (constantsDirectory *) malloc (sizeof(constantsDirectory)+1);
 
-constantsDirectory *ptr;
-ptr = (constantsDirectory *) malloc (sizeof(constantsDirectory)+1);
+    constantDirectory = ptr;
+    constantDirectory->arrayParamsTypes[0] = 0;
+    constantDirectory->arrayParamsTypes[1] = 0;
+    constantDirectory->arrayParamsTypes[2] = 0;
+    constantDirectory->arrayParamsTypes[3] = 0;
 
-ptr->next = (struct constantsDirectory *)constantDirectory;
-constantDirectory = ptr;
-constantDirectory->arrayParamsTypes[0] = 0;
-constantDirectory->arrayParamsTypes[1] = 0;
-constantDirectory->arrayParamsTypes[2] = 0;
-
-return ptr;
+    return ptr;
 }
 
 
@@ -830,20 +888,11 @@ void addTypeConstantParamsProceduresDirectory (int paramType)
     if (paramType == 2 ){
         constantDirectory->arrayParamsTypes[2] +=1;
     }
+    if (paramType == 3 ){
+        constantDirectory->arrayParamsTypes[3] +=1;
+    }
 }
 
-int getTypeConstantParamsProceduresDirectory (int paramType)
-{
-    if (paramType == 0 ){
-        return constantDirectory->arrayParamsTypes[0];
-    }
-    if (paramType == 1 ){
-        return constantDirectory->arrayParamsTypes[1];
-    }
-    if (paramType == 2 ){
-        return constantDirectory->arrayParamsTypes[2];
-    }
-}
 
 /*----------------------------------------------------------------
 ------------------------------------------------------------------
@@ -851,126 +900,166 @@ Constants
 
 ------------------------------------------------------------------ */
 
+void addConstantTable (int type) {
+    if (type == 0 ){
+        constantIntVars *ptr;
+        ptr = (struct constantIntVars *) malloc (sizeof(constantIntVars)+1);
+        ptr->next = (struct constantIntVars *) consIntMemory;
+        constantDirectory->constantIntMemory = (struct constantIntVars *) ptr ;
+        consIntMemory = (struct constantIntVars *) ptr;
 
-void addConstantTable ()
-{
-
-        if(constantDirectory->constantTableMemory == NULL){
-
-            constantDirectory->constantTableMemory = (struct constantTable *) malloc (sizeof(constantTable)+1);
-            /*
-            constantDirectory->initialParam->type = (int *) malloc (sizeof(int));
-            */
-            constantTableTable = (struct constantTable *) constantDirectory->constantTableMemory;
-        }
-        else{
-            constantTable *ptr;
-            ptr = (struct constantTable *) malloc (sizeof(constantTable)+1);
-            
-            
-            ptr->next = (struct constantTable *) constantTableTable;
-            /*
-            ptr->next = (struct constantTable *) proceduresDirectoryTable->constantTableMemory;
-            */
-            constantDirectory->constantTableMemory = (struct constantTable *) ptr ;
-            constantTableTable = (struct constantTable *) ptr ;
-
+        consIntMemory->virtualAddress = constvirtualaddresscount[type];
+        constvirtualaddresscount[type] += 1;
+        consIntMemory->type =  type;
     }
+    if (type == 1 ){
+        constantFloatVars *ptr;
+        ptr = (struct constantFloatVars *) malloc (sizeof(constantFloatVars)+1);
+        ptr->next = (struct constantFloatVars *) consFloatMemory;
+        constantDirectory->constantFloatMemory = (struct constantFloatVars *) ptr ;
+        consFloatMemory = (struct constantFloatVars *) ptr;
 
+        consFloatMemory->virtualAddress = constvirtualaddresscount[type];
+        constvirtualaddresscount[type] += 1;
+        consFloatMemory->type =  type;
+    }
+    if (type == 2 ){
+        constantCharVars *ptr;
+        ptr = (struct constantCharVars *) malloc (sizeof(constantCharVars)+1);
+        ptr->next = (struct constantCharVars *) consCharMemory;
+        constantDirectory->constantCharMemory = (struct constantCharVars *) ptr ;
+        consCharMemory = (struct constantCharVars *) ptr;
+
+        consCharMemory->virtualAddress = constvirtualaddresscount[type];
+        constvirtualaddresscount[type] += 1;
+        consCharMemory->type =  type;
+    }
+    if (type == 3 ){
+        constantStringVars *ptr;
+        ptr = (struct constantStringVars *) malloc (sizeof(constantStringVars)+1);
+        ptr->next = (struct constantStringVars *) consStringMemory;
+        constantDirectory->constantStringMemory = (struct constantStringVars *) ptr ;
+        consStringMemory = (struct constantStringVars *) ptr;
+
+        consStringMemory->virtualAddress = constvirtualaddresscount[type];
+        constvirtualaddresscount[type] += 1;
+        consStringMemory->type =  type;
+    }
 }
 
 
-
-void addTypeConstantTable (int type)
+constantIntVars * getConstIntMemoryByAddress(int address)
 {
-    constantTableTable->type =  type;
+    constantIntVars *ptr;
+    for ( ptr = consIntMemory; ptr != (constantIntVars *) 0;
+                                    ptr = (constantIntVars *)ptr->next )
+    if (ptr->virtualAddress == address)
+        return ptr;
+    return NULL;
 }
-
-
-void addVirtualAddressConstantTable (int type)
+constantFloatVars* getConstFloatMemoryByAddress(int address)
 {
-    constantTableTable->virtualAddress = constvirtualaddresscount[type];
-    constvirtualaddresscount[type] += 1;
+    constantFloatVars *ptr;
+    for ( ptr = consFloatMemory; ptr != (constantFloatVars *) 0;
+                                    ptr = (constantFloatVars *)ptr->next )
+    if (ptr->virtualAddress == address)
+        return ptr;
+    return NULL;
 }
-
-
-constantTable * getConstTableByName(char *name)
+constantCharVars * getConstCharMemoryByAddress(int address)
 {
-constantTable *ptr;
-for ( ptr = constantTableTable;
-ptr != (constantTable *) 0;
-ptr = (constantTable *)ptr->next )
-if (strcmp (ptr->name,name) == 0)
-return ptr;
-return 0;
+    constantCharVars *ptr;
+    for ( ptr = consCharMemory; ptr != (constantCharVars *) 0;
+                                    ptr = (constantCharVars *)ptr->next )
+    if (ptr->virtualAddress == address)
+        return ptr;
+    return NULL;
 }
-
-
-constantTable * getConstTableByAddress(int address)
+constantStringVars * getConstStringMemoryByAddress(int address)
 {
-constantTable *ptr;
-for ( ptr = constantTableTable;
-ptr != (constantTable *) 0;
-ptr = (constantTable *)ptr->next )
-if (ptr->virtualAddress == address)
-return ptr;
-return 0;
+    constantStringVars *ptr;
+    for ( ptr = consStringMemory; ptr != (constantStringVars *) 0;
+                                    ptr = (constantStringVars *)ptr->next )
+    if (ptr->virtualAddress == address)
+        return ptr;
+    return NULL;
 }
 
-constantTable * getConstTableByInt(int val)
+
+
+constantIntVars * getConstTableByInt(int val)
 {
-constantTable *ptr;
-if ( constantTableTable != NULL){
-for ( ptr = constantTableTable;
-ptr != (constantTable *) 0;
-ptr = (constantTable *)ptr->next ){
-if (ptr->intValue == val){
-return ptr;
+    constantIntVars *ptr;
+    if ( consIntMemory != NULL){
+        for ( ptr = consIntMemory; ptr != (constantIntVars *) 0; 
+                                        ptr = (constantIntVars *)ptr->next ){
+            if (ptr->intValue == val){
+                return ptr;
+            }
+        }
+    }
+    return NULL;
 }
+constantFloatVars * getConstTableByFloat(float val)
+{
+    constantFloatVars *ptr;
+    if ( consFloatMemory != NULL){
+        for ( ptr = consFloatMemory; ptr != (constantFloatVars *) 0; 
+                                        ptr = (constantFloatVars *)ptr->next ){
+            if (ptr->floatValue == val){
+                return ptr;
+            }
+        }
+    }
+    return NULL;
 }
+constantCharVars * getConstTableByChar(char val)
+{
+    constantCharVars *ptr;
+    if ( consCharMemory != NULL){
+        for ( ptr = consCharMemory; ptr != (constantCharVars *) 0; 
+                                        ptr = (constantCharVars *)ptr->next ){
+            if (ptr->charValue == val){
+                return ptr;
+            }
+        }
+    }
+    return NULL;
 }
-return NULL;
+constantStringVars * getConstTableByString(char * val)
+{
+    constantStringVars *ptr;
+    if ( consStringMemory != NULL){
+        for ( ptr = consStringMemory; ptr != (constantStringVars *) 0; 
+                                        ptr = (constantStringVars *)ptr->next ){  
+            if (strcmp ( ptr->stringValue , val ) == 0){
+                return ptr;
+            }
+            
+        }
+    }
+    return NULL;
 }
 
 
 void addConstTableByInt(int val)
 {
-constantTableTable->intValue = val; 
+    consIntMemory->intValue = val; 
 }
 
 void addConstTableByFloat(float val)
 {
-constantTableTable->floatValue = val; 
+    consFloatMemory->floatValue = val; 
 }
 
 void addConstTableByChar(char val)
 {
-constantTableTable->charValue = val; 
+    consCharMemory->charValue = val; 
 }
 
-
-
-
-
-constantTable * getConstTableByChar(char val)
+void addConstTableByString(char *val)
 {
-constantTable *ptr;
-for ( ptr = constantTableTable;
-ptr != (constantTable *) 0;
-ptr = (constantTable *)ptr->next )
-if (ptr->charValue == val)
-return ptr;
-return NULL;
-}
-constantTable * getConstTableByFloat(float val)
-{
-constantTable *ptr;
-for ( ptr = constantTableTable;
-ptr != (constantTable *) 0;
-ptr = (constantTable *)ptr->next )
-if (ptr->floatValue == val)
-return ptr;
-return NULL;
+    consStringMemory->stringValue = val; 
 }
 
 
@@ -1022,12 +1111,18 @@ return NULL;
 
 
 
-/* -----------------  0         1        2         3        4          5    6     7   8   9    10             11 12  13  14     15          16        17           18      19            20        21    22   23   24   25                      
+
+
+
+
+
+
+/* -----------------  0         1        2         3        4          5    6     7   8   9    10             11 12  13  14     15          16        17           18      19            20        21    22   23   24   25                 26        27      28     29       30       31                 
 */
-enum operationsCode {MAININIT, GOTO, GOTOFALSE, GOSUB, GOSUBSPECIAL, MULT, DIV, ADD, SUB, EQ, EQUALITYSYMBOL, LT,GT,LOET,GOET, ANDLOGICAL, ORLOGICAL, READVAL, WRITEVAL , RETURNVAL, ENDFUNCTION,PARAM, ERA, VER, END, NOTEQUALITYSYMBOL};
+enum operationsCode {MAININIT, GOTO, GOTOFALSE, GOSUB, GOSUBSPECIAL, MULT, DIV, ADD, SUB, EQ, EQUALITYSYMBOL, LT,GT,LOET,GOET, ANDLOGICAL, ORLOGICAL, READVAL, WRITEVAL , RETURNVAL, ENDFUNCTION,PARAM, ERA, VER, END, NOTEQUALITYSYMBOL, GOTOTRUE, MINUS,   PENUP, PENDOWN, LINE, CIRCLE};
 
 /* OPERATIONS:  Representation */
-char *operationsCodeName[] = {"MAININIT" ,"GOTO", "GOTOFALSE", "GOSUB", "GOSUBSPECIAL", "MULT", "DIV", "ADD", "SUB", "EQ", "EQUALITYSYMBOL", "LT","GT","LOET","GOET", "ANDLOGICAL", "ORLOGICAL", "READVAL", "WRITEVAL" , "RETURNVAL", "ENDFUNCTION","PARAM", "ERA", "VER","END", "NOTEQUALITYSYMBOL" };
+char *operationsCodeName[] = {"MAININIT" ,"GOTO", "GOTOFALSE", "GOSUB", "GOSUBSPECIAL", "MULT", "DIV", "ADD", "SUB", "EQ", "EQUALITYSYMBOL", "LT","GT","LOET","GOET", "ANDLOGICAL", "ORLOGICAL", "READVAL", "WRITEVAL" , "RETURNVAL", "ENDFUNCTION","PARAM", "ERA", "VER","END", "NOTEQUALITYSYMBOL", "GOTOTRUE", "MINUS", "PENUP", "PENDOWN", "LINE", "CIRCLE" };
 
 struct instructionCode
 {
@@ -1038,11 +1133,6 @@ int arg1;
 int arg2;
 int result;
 
-
-char *arg1c;
-char *arg2c;
-float farg1;
-float farg2;
 
 };
 typedef struct instructionCode instructionCode;
@@ -1089,8 +1179,7 @@ typedef struct operators operators;
 /*-----------------------------------------------------------------------
 Initializa Stacks
 -----------------------------------------------------------------------*/
-
-jumpStack *jumpStackActual;
+jumpStack *ifJumpStack;
 operandsStack *operandsStackActual;
 operators *operatorsActual;
 
@@ -1103,86 +1192,48 @@ Methods for struct jumpStack
 
 -----------------------------------------------------------------------*/
 
-jumpStack * addjumpStack (int jumpVal)
+jumpStack * addjumpStack (struct jumpStack *jumpStackActual, int jumpVal)
 {
-jumpStack *ptr;
-ptr = (jumpStack *) malloc (sizeof(jumpStack)+1);
-ptr->jumpValue =  jumpVal;
-ptr->next = (struct jumpStack *)jumpStackActual;
-jumpStackActual = ptr;
-return ptr;
-}
-
-
-void * eliminateActualJumpStackNode ()
-{
-if(jumpStackActual == NULL){
-
-}
-else{
     jumpStack *ptr;
     ptr = (jumpStack *) malloc (sizeof(jumpStack)+1);
+    ptr->jumpValue =  jumpVal;
     ptr->next = (struct jumpStack *)jumpStackActual;
-    jumpStackActual = (struct jumpStack *) jumpStackActual->next;
-    free(ptr);
+    jumpStackActual = ptr;
+    /*
+    printf("%d : %d : %d : %d \n", jumpVal, ptr->jumpValue, jumpStackActual->jumpValue,
+                                     ifJumpStack->jumpValue);
+    */
+    return jumpStackActual;
+    
 }
 
-}
 
-int getTopJumpStackValue()
+jumpStack * eliminateActualJumpStackNode (struct jumpStack *jumpStackActual)
 {
-if(jumpStackActual != NULL){ 
-int value;
-value = jumpStackActual->jumpValue;
-return value;
-}
+    if(jumpStackActual == NULL){
 
-return 0;
-}
-
-
-/*-----------------------------------------------------------------------
-
-Methods for struct operands Stack
-
------------------------------------------------------------------------*/
-
-
-operandsStack * addoperandsStack (int operandAd)
-{
-operandsStack *ptr;
-ptr = (operandsStack *) malloc (sizeof(operandsStack)+1);
-ptr->operandAddress  = operandAd;
-ptr->next = (struct operandsStack *)operandsStackActual;
-operandsStackActual = ptr;
-return ptr;
-}
-
-
-void  eliminateActualOperandsStackNode ()
-{
-    if(operandsStackActual == NULL){
     }
     else{
-        operandsStack *ptr;
-        ptr = (operandsStack *) malloc (sizeof(operandsStack)+1);
-        ptr->next = (struct operandsStack *)operandsStackActual;
-        operandsStackActual = (struct operandsStack *) operandsStackActual->next;
-        free(ptr);
+        jumpStack *ptr;
+        if(jumpStackActual != NULL){
+            ptr = (struct jumpStack *) jumpStackActual->next;
+        }
+        //printf("error if   \n");
+        //printf("error %d  jumpStackActual -> jum value \n",jumpStackActual->jumpValue);
+        free(jumpStackActual);
+        //printf("error free   \n");
+        jumpStackActual =  ptr;
     }
+    return jumpStackActual;
 
 }
 
 
-int getTopOperandsStackValue()
-{
-    if(operandsStackActual != NULL){ 
-        int value;
-        value = operandsStackActual->operandAddress;
-        return value;
-    }
-    return 0;
-}
+
+
+
+
+
 
 
 
@@ -1207,20 +1258,6 @@ operatorsActual = ptr;
 return ptr;
 }
 
-/*
-void eliminateActualOperandsStackNode ()
-{
-if(operatorsActual == NULL){
-}
-else{
-    operators *ptr;
-    ptr = (operators *) malloc (sizeof(operators));
-    ptr = (struct operators *)operatorsActual;
-    operatorsActual = (struct operators *) operatorsActual->next;
-    free(ptr);
-}
-}
-*/
 
 int getTopOperatorsStackValue()
 {
@@ -1250,32 +1287,32 @@ int code_offset; /* Initial offset */
 /* Generates code at current location */
  void generate_code( int operation, int arg1, int arg2, int result )
 { code[code_offset].op = operation;
-code[code_offset].arg1 = arg1;
-code[code_offset].arg2 = arg2;
-code[code_offset].result = result;
-code_offset++;
+    code[code_offset].arg1 = arg1;
+    code[code_offset].arg2 = arg2;
+    code[code_offset].result = result;
+    code_offset++;
 }
 void modify_code_at_given_cuad_num_arg1( int arg1, int cuad_num )
 { 
-code[cuad_num].arg1 = arg1;
+    code[cuad_num].arg1 = arg1;
 }
 void modify_code_at_given_cuad_num_arg2( int arg2, int cuad_num )
 { 
-code[code_offset].arg2 = arg2;
+    code[code_offset].arg2 = arg2;
 }
 void modify_code_at_given_cuad_num_result( int result , int cuad_num )
 { 
-code[cuad_num].result = result;
+    code[cuad_num].result = result;
 }
 
 
 /* Generates code at a reserved location */
  void back_patch( int codeLine, int operation, int arg1, int arg2, int result )
 {
-code[codeLine].op = operation;
-code[codeLine].arg1 = arg1;
-code[codeLine].arg2 = arg2;
-code[codeLine].result = result;
+    code[codeLine].op = operation;
+    code[codeLine].arg1 = arg1;
+    code[codeLine].arg2 = arg2;
+    code[codeLine].result = result;
 }
 
 void addGotoFalse(int codeLine, int result ){
@@ -1336,36 +1373,41 @@ i++;
 
 
 
-
+/* Arreglo dinámico de Enteros */
 struct intergers{
     int len;
     int  arrayinterger[];
 };
 typedef struct intergers intergers;
 
+/* Arreglo dinámico de Flotantes */
 struct floats{
     int len;
     float arrayfloat[];
 };
 typedef struct floats floats;
 
+/* Arreglo dinámico de Chars */
 struct chars{
     int len;
     char arraychar[];
 };
 typedef struct chars chars;
 
-
+/* Memoria real */
 struct memValues{
     struct intergers *structintergers;
+    struct intergers *tempStructIntergers;
+    struct intergers *tempStructPointers;
     struct floats *structfloats;
+    struct floats *tempStructFloats;
     struct chars *structchars;
-    
+    struct chars *tempStructChars;
 };
 typedef struct memValues memValues;
 
+/* Pila de la Memoria real*/
 struct stackMemValues{
-    int priority;
     struct memValues *memoryVar;
     struct stackMemValues *next;
 };
@@ -1374,9 +1416,7 @@ typedef struct stackMemValues stackMemValues;
 struct stackMemValues * actualLocalMemory;
 struct stackMemValues * newLocalMemory;
 struct memValues * globalMemory;
-struct memValues * tempMemory;
 
-struct parameters * paramsActual;
 
 int globalvirtaddresscount[4];
 int localvirtaddresscount[4];
@@ -1384,10 +1424,11 @@ int constvirtaddresscount[4];
 int tempvirtaddresscount[4];
 int errorocurred;
 
-/**************** se crea la memoria estatica de la maquina virtual *********/
-struct memValues * createMemory(struct memValues *s, int lenInt, int lenFloat, int lenChar){
+/*Se crea la memoria real y se crean los arreglos dinámicos de la máquina virtual*/
+struct memValues * createMemory(struct memValues *s, int lenInt, int lenFloat, int lenChar, int tempInt, int tempFloat, int tempChar, int tempPointer){
     s = (struct memValues *) malloc(sizeof(struct memValues));
 
+    /*Creación de los tipos*/
     s->structintergers = (struct intergers *) 
     malloc(sizeof(struct intergers)+ sizeof(int)*(lenInt));
 
@@ -1397,22 +1438,31 @@ struct memValues * createMemory(struct memValues *s, int lenInt, int lenFloat, i
     s->structchars = (struct chars *) 
     malloc(sizeof(struct chars)+ sizeof(char)*(lenChar)+1);
 
-    return s;
+    /*Creación de los temporales*/
+    s->tempStructIntergers = (struct intergers *) 
+    malloc(sizeof(struct intergers)+ sizeof(int)*(tempInt));
 
+    s->tempStructFloats = (struct floats *) 
+    malloc(sizeof(struct floats)+ sizeof(float)*(tempFloat));
+
+    s->tempStructChars = (struct chars *) 
+    malloc(sizeof(struct chars)+ sizeof(char)*(tempChar)+1);
+    
+    s->tempStructPointers = (struct intergers *) 
+    malloc(sizeof(struct intergers)+ sizeof(int)*(tempPointer));
+
+    return s;
 }
 
-
-
-
-/* Function for the cration of a new local memory*/
-struct stackMemValues * createLocalMemory(struct stackMemValues *s, int lenInt, int lenFloat, int lenChar){
+/* Creación de un atributo para la Pila de la Memoria real */
+struct stackMemValues * createLocalMemory(struct stackMemValues *s, int lenInt, int lenFloat, int lenChar, int tempInt, int tempFloat, int tempChar, int tempPointer){
     s = (struct stackMemValues *) malloc(sizeof(struct stackMemValues));
 
-    s->memoryVar = createMemory(s->memoryVar, lenInt, lenFloat, lenChar);
-    s->priority=0;
+    /* Creacion de la Memoria Real*/
+    s->memoryVar = createMemory(NULL, lenInt, lenFloat, lenChar, tempInt, tempFloat, tempChar, tempPointer);
     return s;
-
 }
+
 
 
 /************** End structures for Virtual Machine **************/
@@ -1450,6 +1500,18 @@ void erraseLocalMemory(){
             if(s->memoryVar->structchars != NULL){
                 free(s->memoryVar->structchars);
             }
+            if(s->memoryVar->tempStructIntergers != NULL){
+                free(s->memoryVar->tempStructIntergers);
+            }
+            if(s->memoryVar->tempStructFloats != NULL){
+                free(s->memoryVar->tempStructFloats);
+            }
+            if(s->memoryVar->tempStructChars != NULL){
+                free(s->memoryVar->tempStructChars);
+            }
+            if(s->memoryVar->tempStructPointers != NULL){
+                free(s->memoryVar->tempStructPointers);
+            }
             free(s->memoryVar);
         }
         else{
@@ -1462,16 +1524,6 @@ void erraseLocalMemory(){
         errorocurred=1;
         printf("Error in Virtual Machine : Actual memory is Null \n");
     }
-    /*
-    free(s);
-    s->memoryVar->structintergers
-    s->memoryVar->structfloats
-    s->memoryVar->structchars
-    s->memoryVar
-    s
-    */
-
-    
 
 }
 
@@ -1491,19 +1543,38 @@ void changeNewToActual(){
     }
 }
 
+/*                               Int   Float Char  String  PointerInt  Pointerfloat PointerChar  Limit      */
+/*                                0      1      2      3      4            5           6            7
+int globalTemporalsCount[8] = {  5000,  6000,  7000,  8000,  9000,       9300,        9600,       10000};
+int fixGlobalTemporals[8] =   {  5000,  6000,  7000,  8000,  9000,       9300,        9600,       10000};
+int localTemporalsCount[8] =  { 15000, 16000, 17000, 18000, 19000,      19300,       19600,       20000};
+int fixLocalTemporals[8] =    { 15000, 16000, 17000, 18000, 19000,      19300,       19600,       20000};
 
+*/
 
 int returntypebyByVirtualAddress(int dir){
-    if( (1000 <= dir && dir < 2000) | (10000 <= dir && dir < 11000) | (20000 <= dir && dir < 21000) | (30000 <= dir && dir < 31000) ){
+    if( (1000 <= dir && dir < 2000) | (10000 <= dir && dir < 11000) | (20000 <= dir && dir < 21000) | (30000 <= dir && dir < 31000) 
+        | (fixGlobalTemporals[0] <= dir && dir < fixGlobalTemporals[1] )
+        | (fixGlobalTemporals[4] <= dir && dir < fixGlobalTemporals[5] )
+        | (fixLocalTemporals[0] <= dir && dir < fixLocalTemporals[1]   )
+        | (fixLocalTemporals[4] <= dir && dir < fixLocalTemporals[5]   )  ){
         return 1;
     }
-    if( (2000 <= dir && dir < 3000) | (11000 <= dir && dir < 12000) | (21000 <= dir && dir < 22000) | (31000 <= dir && dir < 32000) ){
+    if( (2000 <= dir && dir < 3000) | (11000 <= dir && dir < 12000) | (21000 <= dir && dir < 22000) | (31000 <= dir && dir < 32000) 
+        | (fixGlobalTemporals[1] <= dir && dir < fixGlobalTemporals[2] )
+        | (fixLocalTemporals[1] <= dir && dir < fixLocalTemporals[2]   )  
+        | (fixGlobalTemporals[5] <= dir && dir < fixGlobalTemporals[6] )
+        | (fixLocalTemporals[5] <= dir && dir < fixLocalTemporals[6]   )  ){
         return 2;
     }
-    if( (3000 <= dir && dir < 4000) | (12000 <= dir && dir < 13000) | (22000 <= dir && dir < 23000) | (32000 <= dir && dir < 33000) ){
+    if( (3000 <= dir && dir < 4000) | (12000 <= dir && dir < 13000) | (22000 <= dir && dir < 23000) | (32000 <= dir && dir < 33000) 
+        | (fixGlobalTemporals[2] <= dir && dir < fixGlobalTemporals[3] )
+        | (fixLocalTemporals[2] <= dir && dir < fixLocalTemporals[3]   )  
+        | (fixGlobalTemporals[6] <= dir && dir < fixGlobalTemporals[7] )
+        | (fixLocalTemporals[6] <= dir && dir < fixLocalTemporals[7]   )){
         return 3;
     }
-    if(33000 <= dir && dir < 34000){
+    if(23000 <= dir && dir < 24000){
         return 4;
     }
     return 0 ; 
@@ -1512,56 +1583,40 @@ int returntypebyByVirtualAddress(int dir){
 
 
 /*
-struct memValues * getByVirtualAddressLocalGlobalConstant( int dir, int typelocal){
-    
-
- 
-    if(returnGlobalLocalConstanteTemporal(dir) == 1){
-
-        return globalMemory;
-    }
-
-
-    if(returnGlobalLocalConstanteTemporal(dir) == 2){
-        if(typelocal == 1){
-            return actualLocalMemory->memoryVar;
-        }
-        if(typelocal == 3){
-            return newLocalMemory->memoryVar;
-        }
-        return 0;
-    }
-
-  
-    if(returnGlobalLocalConstanteTemporal(dir) == 1){
-        return tempMemory;
-    }
-    return 0;
-
-}
-
+int fixGlobalTemporals[6] =   {  5000,  6000,  7000,  8000,  9000,  10000};
+int localTemporalsCount[6] =  { 15000, 16000, 17000, 18000, 19000,  20000};
+int fixLocalTemporals[6]
 */
+/*  1      2       3          4            5           6           7     */
+/*Global Local Constante GlobTemporal GlobPoninter LocalTemp LocalPointer*/
+/*returnGlobalLocalConstanteGlobTemporalGlobPoninterLocalTempLocalPointer*/
 int returnGlobalLocalConstanteTemporal(int dir){
-    if(1000 <= dir && dir < 10000){
+    if(1000 <= dir && dir < 5000){
         return 1;
     }
-    if(10000 <= dir && dir < 20000){
+    if(10000 <= dir && dir < 15000){
         return 2;
     }
 
-    if(20000 <= dir && dir < 30000){
+    if(20000 <= dir && dir < 25000){
         return 3;
     }
 
-    if(30000 <= dir && dir < 33000){
+    if(fixGlobalTemporals[0] <= dir && dir < fixGlobalTemporals[4]){
         return 4;
     }
-
-    if(33000 <= dir && dir < 34000){
+    if(fixGlobalTemporals[4] <= dir && dir < fixGlobalTemporals[7]){
         return 5;
     }
-    return 0 ; 
 
+    if(fixLocalTemporals[0] <= dir && dir < fixLocalTemporals[4]){
+        return 6;
+    }
+    if(fixLocalTemporals[4] <= dir && dir < fixLocalTemporals[7]){
+        return 7;
+    }
+    
+    return 0 ;
 }
 
 
@@ -1588,46 +1643,49 @@ int returtIntValue(int dir, int typelocal){
 
     if(returnGlobalLocalConstanteTemporal(dir) == 3){
         if(20000 <= dir && dir < 21000){
-            struct constantTable * aux;
-            aux = getConstTableByAddress(dir);
-            return aux->intValue;
+            constantIntVars * aux = getConstIntMemoryByAddress(dir);
+            if(aux != NULL){
+                return aux->intValue;
+            }
+            else{
+                return 0;
+            }
         }
     }
 
     if(returnGlobalLocalConstanteTemporal(dir) == 4){
-        if(30000 <= dir && dir < 31000){
-        return tempMemory->structintergers->arrayinterger[dir-30000];
+        if(fixGlobalTemporals[0] <= dir && dir < fixGlobalTemporals[1]){
+        return globalMemory->tempStructIntergers->arrayinterger[dir-fixGlobalTemporals[0]];
         }
     }
-
     if(returnGlobalLocalConstanteTemporal(dir) == 5){
-        if(33000 <= dir && dir < 34000){
-        return tempMemory->structintergers->arrayinterger[dir-33000];
+        if(fixGlobalTemporals[4] <= dir && dir < fixGlobalTemporals[7]){
+            if(fixGlobalTemporals[4] <= dir && dir < fixGlobalTemporals[5])
+            return globalMemory->tempStructPointers->arrayinterger[dir-fixGlobalTemporals[4]];
+            if(fixGlobalTemporals[5] <= dir && dir < fixGlobalTemporals[6])
+            return globalMemory->tempStructPointers->arrayinterger[dir-fixGlobalTemporals[5]];
+            if(fixGlobalTemporals[6] <= dir && dir < fixGlobalTemporals[7])
+            return globalMemory->tempStructPointers->arrayinterger[dir-fixGlobalTemporals[6]];
+        }
+    }
+
+    if(returnGlobalLocalConstanteTemporal(dir) == 6){
+        if(fixLocalTemporals[0] <= dir && dir < fixLocalTemporals[1]){
+        return actualLocalMemory->memoryVar->tempStructIntergers->arrayinterger[dir-fixLocalTemporals[0]];
+        }
+    }
+    if(returnGlobalLocalConstanteTemporal(dir) == 7){
+        if(fixLocalTemporals[4] <= dir && dir < fixLocalTemporals[7]){
+            if(fixLocalTemporals[4] <= dir && dir < fixLocalTemporals[5])
+            return actualLocalMemory->memoryVar->tempStructPointers->arrayinterger[dir-fixLocalTemporals[4]];
+            if(fixLocalTemporals[5] <= dir && dir < fixLocalTemporals[6])
+            return actualLocalMemory->memoryVar->tempStructPointers->arrayinterger[dir-fixLocalTemporals[5]];
+            if(fixLocalTemporals[6] <= dir && dir < fixLocalTemporals[7])
+            return actualLocalMemory->memoryVar->tempStructPointers->arrayinterger[dir-fixLocalTemporals[6]];
         }
     }
 }
 
-/*
-if(returntypebyByVirtualAddress(returtIntValue(dir,1),1) = 1){
-    int value = returtIntValue(returtIntValue(dir,1),1);
-}
-if(returntypebyByVirtualAddress(returtIntValue(dir,0),0) = 2){
-    float value = returtIntValue(returtIntValue(dir,0),0);
-}
-if(returntypebyByVirtualAddress(returtIntValue(dir,0),0) = 3){
-    char value = returtIntValue(returtIntValue(dir,0),0);
-}
-
-if(returntypebyByVirtualAddress(returtIntValue(dir,1),1) = 1){
-    modifyIntValue(returtIntValue(dir,value,0),0);
-}
-if(returntypebyByVirtualAddress(returtIntValue(dir,0),0) = 2){
-    modifyFloatValue(returtIntValue(dir,value,0),0);
-}
-if(returntypebyByVirtualAddress(returtIntValue(dir,0),0) = 3){
-    modifyCharValue(returtIntValue(dir,value,0),0);
-}
-*/
 
 void modifyIntValue(int dir, int value, int typelocal){
     if(returnGlobalLocalConstanteTemporal(dir) == 1){
@@ -1649,16 +1707,39 @@ void modifyIntValue(int dir, int value, int typelocal){
         }    
     }
     /*
-    printf("returnGlobalLocalConstanteTemporal : %d  \n" ,returnGlobalLocalConstanteTemporal(dir));
+    printf("returnGlobalLocalConstanteTemporal : %d \n int value : %d \n int typelocal : %d\n" ,
+            returnGlobalLocalConstanteTemporal(dir),value,typelocal);
     printf("dir : %d  \n" ,dir);
     */
     if(returnGlobalLocalConstanteTemporal(dir) == 4){
-        if(30000 <= dir && dir < 31000){
-            tempMemory->structintergers->arrayinterger[dir-30000] = value;
-            /*
-            printf("Value Modified : %d  \n" ,value);
-            printf("Temp  : %d  \n" ,tempMemory->structintergers->arrayinterger[dir-30000]);
-            */
+        if(fixGlobalTemporals[0] <= dir && dir < fixGlobalTemporals[1]){
+            globalMemory->tempStructIntergers->arrayinterger[dir-fixGlobalTemporals[0]] = value;
+        }
+    }
+    if(returnGlobalLocalConstanteTemporal(dir) == 5){
+        if(fixGlobalTemporals[4] <= dir && dir < fixGlobalTemporals[7]){
+            if(fixGlobalTemporals[4] <= dir && dir < fixGlobalTemporals[5])
+            globalMemory->tempStructPointers->arrayinterger[dir-fixGlobalTemporals[4]] = value;
+            if(fixGlobalTemporals[5] <= dir && dir < fixGlobalTemporals[6])
+            globalMemory->tempStructPointers->arrayinterger[dir-fixGlobalTemporals[5]] = value;
+            if(fixGlobalTemporals[6] <= dir && dir < fixGlobalTemporals[7])
+            globalMemory->tempStructPointers->arrayinterger[dir-fixGlobalTemporals[6]] = value;
+        }
+    }
+
+    if(returnGlobalLocalConstanteTemporal(dir) == 6){
+        if(fixLocalTemporals[0] <= dir && dir < fixLocalTemporals[1]){
+            actualLocalMemory->memoryVar->tempStructIntergers->arrayinterger[dir-fixLocalTemporals[0]] = value;
+        }
+    }
+    if(returnGlobalLocalConstanteTemporal(dir) == 7){
+        if(fixLocalTemporals[4] <= dir && dir < fixLocalTemporals[7]){
+            if(fixLocalTemporals[4] <= dir && dir < fixLocalTemporals[5])
+            actualLocalMemory->memoryVar->tempStructPointers->arrayinterger[dir-fixLocalTemporals[4]] = value;
+            if(fixLocalTemporals[5] <= dir && dir < fixLocalTemporals[6])
+            actualLocalMemory->memoryVar->tempStructPointers->arrayinterger[dir-fixLocalTemporals[5]] = value;
+            if(fixLocalTemporals[6] <= dir && dir < fixLocalTemporals[7])
+            actualLocalMemory->memoryVar->tempStructPointers->arrayinterger[dir-fixLocalTemporals[6]] = value;
         }
     }
 }
@@ -1684,18 +1765,29 @@ float returtfloatValue(int dir, int typelocal){
     }
     if(returnGlobalLocalConstanteTemporal(dir) == 3){
         if(21000 <= dir && dir < 22000){
-            struct constantTable * aux;
-            aux = getConstTableByAddress(dir);
-            return aux->floatValue;
-        }
-    }
-    if(returnGlobalLocalConstanteTemporal(dir) == 4){
-        if(31000 <= dir && dir < 32000){
-        return tempMemory->structfloats->arrayfloat[dir-31000];
+            constantFloatVars * aux = getConstFloatMemoryByAddress( dir );
+            if(aux != NULL){
+                return aux->floatValue;
+            }
+            else{
+                return 0.0;
+            }
+
         }
     }
 
-    return -1;
+    if(returnGlobalLocalConstanteTemporal(dir) == 4){
+        if(fixGlobalTemporals[1] <= dir && dir < fixGlobalTemporals[2]){
+        return globalMemory->tempStructFloats->arrayfloat[dir-fixGlobalTemporals[1]];
+        }
+    }
+
+    if(returnGlobalLocalConstanteTemporal(dir) == 6){
+        if(fixLocalTemporals[1] <= dir && dir < fixLocalTemporals[2]){
+        return actualLocalMemory->memoryVar->tempStructFloats->arrayfloat[dir-fixLocalTemporals[1]];
+        }
+    }
+
 }
 
 void modifyFloatValue(int dir, float value, int typelocal){
@@ -1719,8 +1811,14 @@ void modifyFloatValue(int dir, float value, int typelocal){
     }
 
     if(returnGlobalLocalConstanteTemporal(dir) == 4){
-        if(31000 <= dir && dir < 32000){
-            tempMemory->structfloats->arrayfloat[dir-31000] = value;
+        if(fixGlobalTemporals[1] <= dir && dir < fixGlobalTemporals[2]){
+            globalMemory->tempStructFloats->arrayfloat[dir-fixGlobalTemporals[1]] = value;
+        }
+    }
+
+    if(returnGlobalLocalConstanteTemporal(dir) == 6){
+        if(fixLocalTemporals[1] <= dir && dir < fixLocalTemporals[2]){
+            actualLocalMemory->memoryVar->tempStructFloats->arrayfloat[dir-fixLocalTemporals[1]] = value;
         }
     }
 }
@@ -1746,19 +1844,46 @@ char returtcharValue(int dir, int typelocal){
     }
     if(returnGlobalLocalConstanteTemporal(dir) == 3){
         if(22000 <= dir && dir < 23000){
-            struct constantTable * aux;
-            aux = getConstTableByAddress(dir);
-            return aux->charValue;
-        }
-    }
-    if(returnGlobalLocalConstanteTemporal(dir) == 4){
-        if(32000 <= dir && dir < 33000){
-        return tempMemory->structchars->arraychar[dir-32000];
+            constantCharVars * aux = getConstCharMemoryByAddress(dir);
+            if(aux != NULL){
+                return aux->charValue;
+            }
+            else{
+                return ' ';
+            }
         }
     }
 
-    return -1;
+    if(returnGlobalLocalConstanteTemporal(dir) == 4){
+        if(fixGlobalTemporals[2] <= dir && dir < fixGlobalTemporals[3]){
+        return globalMemory->tempStructChars->arraychar[dir-fixGlobalTemporals[2]];
+        }
+    }
+
+    if(returnGlobalLocalConstanteTemporal(dir) == 6){
+        if(fixLocalTemporals[2] <= dir && dir < fixLocalTemporals[3]){
+        return actualLocalMemory->memoryVar->tempStructChars->arraychar[dir-fixLocalTemporals[2]];
+        }
+    }
+
+    return ' ';
 }
+
+char * returnStringValue(int dir, int typelocal){
+    if(returnGlobalLocalConstanteTemporal(dir) == 3){
+        if(23000 <= dir && dir < 24000){
+            constantStringVars* aux = getConstStringMemoryByAddress(dir);
+            if(aux != NULL){
+                return aux->stringValue;
+            }
+            else{
+                return NULL;
+            }
+        }
+    }
+    return NULL;
+}
+
 
 void modifyCharValue(int dir, char value, int typelocal){
     if(returnGlobalLocalConstanteTemporal(dir) == 1){
@@ -1780,9 +1905,15 @@ void modifyCharValue(int dir, char value, int typelocal){
         }    
     }
 
-    if(returnGlobalLocalConstanteTemporal(dir) == 3){
-        if(32000 <= dir && dir < 33000){
-            tempMemory->structchars->arraychar[dir-32000] = value;
+    if(returnGlobalLocalConstanteTemporal(dir) == 4){
+        if(fixGlobalTemporals[2] <= dir && dir < fixGlobalTemporals[3]){
+            globalMemory->tempStructChars->arraychar[dir-fixGlobalTemporals[2]] = value;
+        }
+    }
+
+    if(returnGlobalLocalConstanteTemporal(dir) == 6){
+        if(fixLocalTemporals[2] <= dir && dir < fixLocalTemporals[3]){
+            actualLocalMemory->memoryVar->tempStructChars->arraychar[dir-fixLocalTemporals[2]] = value;
         }
     }
 }
@@ -1790,7 +1921,291 @@ void modifyCharValue(int dir, char value, int typelocal){
 
 
 
+void eliminateGlbalMemory(){
+    if (globalMemory != NULL){ 
+                //printf("ini\n");
+              if(globalMemory->structintergers != NULL)
+                     free(globalMemory->structintergers);
+              //printf("int\n");
+              if(globalMemory->structfloats != NULL)
+                     free(globalMemory->structfloats);
+              //printf("float\n");
+              if(globalMemory->structchars != NULL)
+                     free(globalMemory->structchars);
+              //printf("old\n");
+              
 
+              if(globalMemory->tempStructIntergers != NULL)
+                     free(globalMemory->tempStructIntergers);
+              //
+              //printf("tint\n");
+              if(globalMemory->tempStructFloats != NULL)
+                     free(globalMemory->tempStructFloats);
+              //
+              //printf("tfloat\n");
+              if(globalMemory->tempStructChars != NULL)
+                     free(globalMemory->tempStructChars);
+              //
+              //printf("tchar\n");    
+              if(globalMemory->tempStructPointers != NULL)
+                     free(globalMemory->tempStructPointers);
+              //
+              //printf("new\n");
+
+
+              free(globalMemory);
+              globalMemory = NULL;
+              //printf("new2\n");
+       }
+}
+
+
+
+void eliminateall(){
+       //printf("starting eliminate \n");
+       if (globalProceduresDirectoryTable != NULL){
+              //printf("global \n");  
+              free(globalProceduresDirectoryTable->name);
+              while(globalProceduresDirectoryTable->globalMemory != NULL){
+                     globalVariables *ptr;
+                     ptr = globalProceduresDirectoryTable->globalMemory->next;
+                     free(globalProceduresDirectoryTable->globalMemory->name);
+                     free(globalProceduresDirectoryTable->globalMemory);
+                     globalProceduresDirectoryTable->globalMemory = ptr;
+                     
+              }
+              //printf("global 1 while \n"); 
+              while(globalProceduresDirectoryTable->globalTemporals != NULL){
+                     temporalVariables *ptr;
+                     ptr = globalProceduresDirectoryTable->globalTemporals->next;
+                     free(globalProceduresDirectoryTable->globalTemporals->name);
+                     free(globalProceduresDirectoryTable->globalTemporals);
+                     globalProceduresDirectoryTable->globalTemporals = ptr;
+                     
+              }
+              free(globalProceduresDirectoryTable);
+              globalProceduresDirectoryTable =   NULL;
+       }  
+       /*
+       printf("eliminate globalProceduresDirectoryTable \n");
+       */
+
+
+       while(proceduresDirectoryTable != NULL){
+              proceduresDirectory *ptr;
+              ptr = proceduresDirectoryTable->next;
+              free(proceduresDirectoryTable->name);
+
+              while(proceduresDirectoryTable->localMemory != NULL){
+                     localVariables *ptr_aux;
+                     ptr_aux = proceduresDirectoryTable->localMemory->next;
+                     free(proceduresDirectoryTable->localMemory->name);
+                     free(proceduresDirectoryTable->localMemory);
+                     proceduresDirectoryTable->localMemory = ptr_aux;
+              }
+              while(proceduresDirectoryTable->localTemporals != NULL){
+                     temporalVariables *ptr;
+                     ptr = proceduresDirectoryTable->localTemporals->next;
+                     free(proceduresDirectoryTable->localTemporals->name);
+                     free(proceduresDirectoryTable->localTemporals);
+                     proceduresDirectoryTable->localTemporals = ptr;
+                     
+              }
+
+              while(proceduresDirectoryTable->initialParam != NULL){
+                     parameters *ptr_aux;
+                     ptr_aux = proceduresDirectoryTable->initialParam->next;
+                     free(proceduresDirectoryTable->initialParam);
+                     proceduresDirectoryTable->initialParam = ptr_aux;
+              }
+
+              free(proceduresDirectoryTable);
+              proceduresDirectoryTable = ptr;
+       }
+       proceduresDirectoryTable =   NULL;
+       
+       /*
+       printf("eliminate proceduresDirectoryTable \n");
+       */
+
+
+
+       while(constantDirectory != NULL){
+              constantsDirectory *ptr = NULL;
+
+              //Ints
+              while(constantDirectory->constantIntMemory != NULL){
+                     constantIntVars *ptr_aux;
+                     ptr_aux = constantDirectory->constantIntMemory->next;
+                     free(constantDirectory->constantIntMemory);
+                     constantDirectory->constantIntMemory = ptr_aux;
+              }
+              //FLoats
+              while(constantDirectory->constantFloatMemory != NULL){
+                     constantFloatVars *ptr_aux;
+                     ptr_aux = constantDirectory->constantFloatMemory->next;
+                     free(constantDirectory->constantFloatMemory);
+                     constantDirectory->constantFloatMemory = ptr_aux;
+              }
+              //Chars
+              while(constantDirectory->constantCharMemory != NULL){
+                     constantCharVars *ptr_aux;
+                     ptr_aux = constantDirectory->constantCharMemory->next;
+                     free(constantDirectory->constantCharMemory);
+                     constantDirectory->constantCharMemory = ptr_aux;
+              }
+              //String
+              //printf("eliminate string \n");
+              while(constantDirectory->constantStringMemory != NULL){
+                     constantStringVars *ptr_aux;
+                     ptr_aux = constantDirectory->constantStringMemory->next;
+                     if(constantDirectory->constantStringMemory->stringValue != NULL){
+                     //printf("eliminate string %s \n",constantDirectory->constantStringMemory->stringValue );
+                     free(constantDirectory->constantStringMemory->stringValue);
+                     }
+                     //printf("eliminate constantDirectory STRING\n");
+                     free(constantDirectory->constantStringMemory);
+                     //printf("eliminateD  \n");
+                     constantDirectory->constantStringMemory = ptr_aux;
+              }
+              //printf("eliminate constantDirectory 1 \n");
+              free(constantDirectory);
+              //printf("eliminateD constantDirectory 2 \n");
+              constantDirectory = ptr;
+              //printf("eliminateD constantDirectory 3 \n");
+       }
+       constantDirectory =   NULL;
+       /*
+       printf("eliminate constantDirectory \n");
+       */
+
+
+       /********* Eliminate the dynamic memory of the code generator ***********/
+
+
+       while(operandsStackActual != NULL){
+              operandsStack *ptr;
+              ptr = operandsStackActual->next;
+              free(operandsStackActual);
+              operandsStackActual = ptr;
+       }
+       operandsStackActual = NULL;
+
+       while(operatorsActual != NULL){
+              operators *ptr;
+              ptr = operatorsActual->next;
+              free(operatorsActual);
+              operatorsActual = ptr;
+       }
+       operatorsActual = NULL;
+       /*
+
+       printf("Eliminate the dynamic memory of the code generator\n");
+       */
+
+
+       /********* Eliminate the dynamic memory of the Virtual Machine ***********/
+       
+       while(actualLocalMemory != NULL){
+              stackMemValues *ptr;
+              ptr = actualLocalMemory->next;
+              if(actualLocalMemory->memoryVar != NULL){
+                     if(actualLocalMemory->memoryVar->structintergers != NULL)
+                     free(actualLocalMemory->memoryVar->structintergers);
+                     if(actualLocalMemory->memoryVar->structfloats != NULL)
+                     free(actualLocalMemory->memoryVar->structfloats);
+                     if(actualLocalMemory->memoryVar->structchars != NULL)
+                     free(actualLocalMemory->memoryVar->structchars);
+
+                     if(actualLocalMemory->memoryVar->tempStructIntergers != NULL)
+                     free(actualLocalMemory->memoryVar->tempStructIntergers);
+                     if(actualLocalMemory->memoryVar->tempStructFloats != NULL)
+                     free(actualLocalMemory->memoryVar->tempStructFloats);
+                     if(actualLocalMemory->memoryVar->tempStructChars != NULL)
+                     free(actualLocalMemory->memoryVar->tempStructChars);
+                     if(actualLocalMemory->memoryVar->tempStructPointers != NULL)
+                     free(actualLocalMemory->memoryVar->tempStructPointers);
+
+                     free(actualLocalMemory->memoryVar);
+              }
+              free(actualLocalMemory);
+              actualLocalMemory = ptr;
+       }
+       /**/
+
+       actualLocalMemory = NULL;
+
+       //printf("Eliminate actualLocalMemory\n");
+       
+       while(newLocalMemory != NULL){
+              stackMemValues *ptr;
+              ptr = newLocalMemory->next;
+
+              if(newLocalMemory->memoryVar != NULL){
+                     if(newLocalMemory->memoryVar->structintergers != NULL)
+                     free(newLocalMemory->memoryVar->structintergers);
+                     if(newLocalMemory->memoryVar->structfloats != NULL)
+                     free(newLocalMemory->memoryVar->structfloats);
+                     if(newLocalMemory->memoryVar->structchars != NULL)
+                     free(newLocalMemory->memoryVar->structchars);
+
+                     if(newLocalMemory->memoryVar->tempStructIntergers != NULL)
+                     free(newLocalMemory->memoryVar->tempStructIntergers);
+                     if(newLocalMemory->memoryVar->tempStructFloats != NULL)
+                     free(newLocalMemory->memoryVar->tempStructFloats);
+                     if(newLocalMemory->memoryVar->tempStructChars != NULL)
+                     free(newLocalMemory->memoryVar->tempStructChars);
+                     if(newLocalMemory->memoryVar->tempStructPointers != NULL)
+                     free(newLocalMemory->memoryVar->tempStructPointers);
+
+                     free(newLocalMemory->memoryVar);
+              }
+
+              free(newLocalMemory);
+              newLocalMemory = ptr;
+       }
+       newLocalMemory = NULL;
+
+       /*
+       printf("Eliminate newLocalMemory\n");
+       */
+       //globalMemory = NULL;
+        /*
+       if (globalMemory != NULL){ 
+
+              if(globalMemory->structintergers != NULL)
+                     free(globalMemory->structintergers);
+
+              if(globalMemory->structfloats != NULL)
+                     free(globalMemory->structfloats);
+
+              if(globalMemory->structchars != NULL)
+                     free(globalMemory->structchars);
+
+
+              if(globalMemory->tempStructIntergers != NULL)
+                     free(globalMemory->tempStructIntergers);
+       
+              if(globalMemory->tempStructFloats != NULL)
+                     free(globalMemory->tempStructFloats);
+     
+              if(globalMemory->tempStructChars != NULL)
+                     free(globalMemory->tempStructChars);
+                
+              if(globalMemory->tempStructPointers != NULL)
+                     free(globalMemory->tempStructPointers);
+              
+
+              free(globalMemory);
+              globalMemory = NULL;
+       }
+
+      
+       printf("Eliminate the dynamic memory of the Virtual Machine\n");
+       */
+
+
+}
 
 
 
@@ -1804,15 +2219,105 @@ int initial;
 Registers
 -------------------------------------------------------------------------*/
 int programcounter;
-int priority;
 
 
 
 char ch;
 
 
+float x, y;
+float newposx, newposy; 
+float radio;
+int pen;
 
- void execute_the_code_cycle(){
+int slow;
+
+
+void displayCircle (void) 
+{   
+    if(pen == 1){
+        glBegin(GL_POINTS);
+        float i;
+
+        for ( i = 0; i < (2 * pi); i += 0.001)
+        {
+            newposx = radio * cos(i);
+            newposy = radio * sin(i);
+            glVertex2i(x+newposx, y+newposy);
+        }
+        printf("Print Circle\n") ;
+        glEnd();
+        //glFlush();
+        glutSwapBuffers();
+    }
+}
+
+
+void displayLine (void) 
+{
+    //printf("Error Line enter\n") ;
+    slow = 1000*1000;
+    if(pen == 1){
+     glBegin(GL_LINES);
+        //printf("Error Line enter if \n") ;
+        slow = 1000*1000;
+
+          glVertex2f(x, y);
+              //printf("Error Line enter 1 vert\n") ;
+              slow = 1000*1000;
+
+    }
+          x = newposx;
+          y = newposy;
+     if(pen == 1){     
+          glVertex2f(x, y);
+printf("Print Line\n") ;
+slow = 1000*1000;
+     glEnd();
+     //glFlush();
+     glutSwapBuffers();
+     }
+     //printf("Error Line enter end\n") ;
+     slow = 1000*1000;
+}
+
+
+
+
+//OpenGL
+// funcion para inicializar
+void myInit (void)
+{
+    // color del fondo inicial
+    // 3 argumentos son 0.0
+    glClearColor(0.0, 0.0, 0.0, 1.0);
+     
+    // color de la linea, verde
+    glColor3f(0.0, 1.0, 0.0);
+     
+    // tamaño de los puntos 1 pixel
+    glPointSize(1.0);
+    glMatrixMode(GL_PROJECTION); 
+    glLoadIdentity();
+     
+    // dimencion de la ventana 
+    gluOrtho2D(-780, 780, -420, 420);
+}
+
+
+int justOneCicle;
+
+
+
+
+ void execute_the_code_cycle(void){
+     
+    if(justOneCicle != 0){
+
+    }
+    else{
+    glClear(GL_COLOR_BUFFER_BIT);
+
     globalvirtaddresscount[0] = 1000;
     globalvirtaddresscount[1] = 2000;
     globalvirtaddresscount[2] = 3000;
@@ -1842,32 +2347,40 @@ char ch;
     programcounter = 0;
     top = 0;
     initial = 0;
-    priority = 0;
     errorocurred =0;
 
 
 
-    /******* Se crean copias de los valores de los directorios 
-             globales de la memoria de compilacion **************/
+    /******* **************/
 
     globalProceduresDirectory * st = globalProceduresDirectoryTable;
-    memValues *p = createMemory(p,st->arrayParamsTypes[0],st->arrayParamsTypes[1],st->arrayParamsTypes[2]) ;
+    /*
+    memValues *p = createMemory(p,st->arrayParamsTypes[0],st->arrayParamsTypes[1],
+                    st->arrayParamsTypes[2], st->temporalsCount[0],st->temporalsCount[1],
+                    st->temporalsCount[2], st->temporalsCount[4]) ;
     globalMemory = p;
-    
-    globalProceduresDirectory * s = tempDirectoryTable;
-    memValues *q = createMemory(q,s->arrayParamsTypes[0],s->arrayParamsTypes[1],s->arrayParamsTypes[2]) ;
-    tempMemory = q;
+    */
+    globalMemory = createMemory(globalMemory,st->arrayParamsTypes[0],st->arrayParamsTypes[1],
+                    st->arrayParamsTypes[2], st->temporalsCount[0],st->temporalsCount[1],
+                    st->temporalsCount[2], st->temporalsCount[4]) ;
+    int oldarg1;
+    int oldarg2;
+    int oldresult;
+
 
     stackMemValues *pa;
     proceduresDirectory * sa;
-
-
+    pen =0;
+    x = 60;
+    y = 30;
+    radio = 0;
 
     
-
     do{
         printf("Program Counter : %d  \n" ,programcounter);
+        //printf("error?\n");
         execution = code[programcounter];
+        //printf("error? exe\n");
         programcounter++;
         switch(execution.op){
             /**/
@@ -1877,9 +2390,29 @@ char ch;
             break;
             case GOTO : programcounter = execution.result ;
             break;
-            case GOTOFALSE : if(returtIntValue(execution.arg1,0) >0){
+            case GOTOFALSE :
+                            oldarg1 = execution.arg1;
+                            if ( isPointer(execution.arg1)  != 0 ) {
+                                execution.arg1 = returtIntValue(execution.arg1,1);
+                            } 
+                            if(returtIntValue(execution.arg1,0) > 0){
+                                
+                             }
+                             else{
                                 programcounter = execution.result;
-                             } ;
+                             }
+                             execution.arg1 = oldarg1;
+                             ;
+            break;
+            case GOTOTRUE : oldarg1 = execution.arg1;
+                            if ( isPointer(execution.arg1)  != 0 ) {
+                                execution.arg1 = returtIntValue(execution.arg1,1);
+                            }
+                            if(returtIntValue(execution.arg1,0) > 0){
+                                programcounter = execution.result;
+                             } 
+                             execution.arg1 = oldarg1;
+                             ;
             break;
             case GOSUB :GotoReturnStack[top] = programcounter; top++ ; 
                         if(execution.result >0){
@@ -1889,7 +2422,21 @@ char ch;
             break;
             case GOSUBSPECIAL :  ;
             break;
-            case MULT : if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
+            case MULT : 
+            
+                        oldarg1 = execution.arg1;
+                        if ( isPointer(execution.arg1)  != 0 ) {
+                                execution.arg1 = returtIntValue(execution.arg1,1);
+                        }
+
+                        oldarg2 = execution.arg2;
+                        if ( isPointer(execution.arg2)  != 0 ) {
+                                execution.arg2 = returtIntValue(execution.arg2,1);
+                        }
+            
+            
+            
+                        if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
                             int expval = returtIntValue(execution.arg1,1) * returtIntValue(execution.arg2,1);
                             modifyIntValue(execution.result,expval,1);
                             /*
@@ -1907,13 +2454,29 @@ char ch;
                         if( (returntypebyByVirtualAddress(execution.arg1) == 2) & (returntypebyByVirtualAddress(execution.arg2) == 2) ) {
                             float expval = returtfloatValue(execution.arg1,1) * returtfloatValue(execution.arg2,1);
                             modifyFloatValue(execution.result,expval,1);
-                        }        
+                        }
+                        execution.arg1 = oldarg1;
+                        execution.arg2 = oldarg2;       
              ;
 
             break;
 
 
-            case DIV :  if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
+            case DIV :  
+
+                        oldarg1 = execution.arg1;
+                        if ( isPointer(execution.arg1)  != 0 ) {
+                                execution.arg1 = returtIntValue(execution.arg1,1);
+                        }
+
+                        oldarg2 = execution.arg2;
+                        if ( isPointer(execution.arg2)  != 0 ) {
+                                execution.arg2 = returtIntValue(execution.arg2,1);
+                        }
+
+
+
+                        if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
                             int expval = returtIntValue(execution.arg1,1)/returtIntValue(execution.arg2,1);
                             modifyIntValue(execution.result,expval,1);
                             /*
@@ -1932,11 +2495,30 @@ char ch;
                             float expval = returtfloatValue(execution.arg1,1)/returtfloatValue(execution.arg2,1);
                             modifyFloatValue(execution.result,expval,1);
                         }
+                        execution.arg1 = oldarg1;
+                        execution.arg2 = oldarg2;
              ;
             break;
 
 
-            case ADD :  if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
+            case ADD :  
+                        /*int oldresult = execution.result;
+                        if ( isPointer(execution.result)  != 0 ) {
+                                execution.result = returtIntValue(execution.result,1);
+                        }
+                        */
+                        oldarg1 = execution.arg1;
+                        if ( isPointer(execution.arg1)  != 0 ) {
+                                execution.arg1 = returtIntValue(execution.arg1,1);
+                        }
+
+                        oldarg2 = execution.arg2;
+                        if ( isPointer(execution.arg2)  != 0 ) {
+                                execution.arg2 = returtIntValue(execution.arg2,1);
+                        }
+            
+            
+                        if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
                             int expval = returtIntValue(execution.arg1,1) + returtIntValue(execution.arg2,1);
                             modifyIntValue(execution.result,expval,1);
                             /*
@@ -1958,11 +2540,27 @@ char ch;
                         /*
                         printf("%d Val type \n", returntypebyByVirtualAddress(execution.arg1));
                         */ 
+                        execution.arg1 = oldarg1;
+                        execution.arg2 = oldarg2;
                 ;
             break;
 
 
-            case SUB :  if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
+            case SUB :  
+                        oldarg1 = execution.arg1;
+                        if ( isPointer(execution.arg1)  != 0 ) {
+                                execution.arg1 = returtIntValue(execution.arg1,1);
+                        }
+
+                        oldarg2 = execution.arg2;
+                        if ( isPointer(execution.arg2)  != 0 ) {
+                                execution.arg2 = returtIntValue(execution.arg2,1);
+                        }
+            
+            
+            
+            
+                        if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
                             int expval = returtIntValue(execution.arg1,1) - returtIntValue(execution.arg2,1);
                             modifyIntValue(execution.result,expval,1);
                             /*
@@ -1980,10 +2578,23 @@ char ch;
                         if( (returntypebyByVirtualAddress(execution.arg1) == 2) & (returntypebyByVirtualAddress(execution.arg2) == 2) ) {
                             float expval = returtfloatValue(execution.arg1,1) - returtfloatValue(execution.arg2,1);
                             modifyFloatValue(execution.result,expval,1);
-                        } ;
+                        } 
+                        execution.arg1 = oldarg1;
+                        execution.arg2 = oldarg2;        
+                ;
             break;
 
-            case EQ : if( (returntypebyByVirtualAddress(execution.arg1) == 1) )  {
+            case EQ :   oldarg1 = execution.arg1;
+                        if ( isPointer(execution.arg1)  != 0 ) {
+                                execution.arg1 = returtIntValue(execution.arg1,1);
+                        }
+
+                        oldresult = execution.result;
+                        if ( isPointer(execution.result)  != 0 ) {
+                                execution.result = returtIntValue(execution.result,1);
+                        }
+            
+                        if( (returntypebyByVirtualAddress(execution.arg1) == 1) )  {
                             int expval = returtIntValue(execution.arg1,1);
                             /*
                             int expval2 = returtIntValue(execution.result,1);
@@ -2004,12 +2615,67 @@ char ch;
                             modifyFloatValue(execution.result,expval,1);
                         }
                         if( (returntypebyByVirtualAddress(execution.arg1) == 3) ) {
+                            char expval = returtcharValue(execution.arg1,1);
+                            modifyCharValue(execution.result,expval,1);
+                        }
+                        execution.arg1 = oldarg1;
+                        execution.result = oldresult;
+                         ;
+            break;
+            case MINUS : 
+                        oldarg1 = execution.arg1;
+                        if ( isPointer(execution.arg1)  != 0 ) {
+                                execution.arg1 = returtIntValue(execution.arg1,1);
+                        }
+
+                        oldresult = execution.result;
+                        if ( isPointer(execution.result)  != 0 ) {
+                                execution.result = returtIntValue(execution.result,1);
+                        }
+            
+                        if( (returntypebyByVirtualAddress(execution.arg1) == 1) )  {
+                            int expval = -returtIntValue(execution.arg1,1);
+                            /*
+                            int expval2 = returtIntValue(execution.result,1);
+                            int expval30000 = returtIntValue(30000,1);
+                            printf("Exarg1 val %d \n",expval);
+                            printf("expval2 val %d \n",expval2);
+                            printf("expval30000 val %d \n",expval30000);
+                            */
+                            modifyIntValue(execution.result,expval,1);
+                            /*
+                            printf("After Exarg1 val %d \n",expval);
+                            printf("After expval2 val %d \n",expval2);
+                            */
+                            
+                        }
+                        if( (returntypebyByVirtualAddress(execution.arg1) == 2) ) {
+                            float expval = -returtfloatValue(execution.arg1,1);
+                            modifyFloatValue(execution.result,expval,1);
+                        }
+                        if( (returntypebyByVirtualAddress(execution.arg1) == 3) ) {
                             char expval = returtIntValue(execution.arg1,1);
                             modifyFloatValue(execution.result,expval,1);
-                        } ;
+                        } 
+                        execution.arg1 = oldarg1;
+                        execution.result = oldresult;
+                        ;
             break;
 
-            case EQUALITYSYMBOL :   if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
+            case EQUALITYSYMBOL :   
+            
+                        oldarg1 = execution.arg1;
+                        if ( isPointer(execution.arg1)  != 0 ) {
+                                execution.arg1 = returtIntValue(execution.arg1,1);
+                        }
+
+                        oldarg2 = execution.arg2;
+                        if ( isPointer(execution.arg2)  != 0 ) {
+                                execution.arg2 = returtIntValue(execution.arg2,1);
+                        }
+            
+            
+                                    if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
                                         if(returtIntValue(execution.arg1,1) == returtIntValue(execution.arg2,1)){
                                             modifyIntValue(execution.result,1,1);
                                         }
@@ -2047,17 +2713,36 @@ char ch;
                                     if( (returntypebyByVirtualAddress(execution.arg1) == 3) & (returntypebyByVirtualAddress(execution.arg2) == 3) ) {
                                         if(returtcharValue(execution.arg1,1) == returtcharValue(execution.arg2,1)){
                                             modifyIntValue(execution.result,1,1);
+                                            /*
                                             printf("True equality : %c \n",returtcharValue(execution.arg1,1));
                                             printf("True equality : %c \n",returtcharValue(execution.arg2,1));
+                                            */
                                         }
                                         else{
                                             modifyIntValue(execution.result,0,1);
                                         }
-                                    } ; 
+                                    } 
+                                    execution.arg1 = oldarg1;
+                                    execution.arg2 = oldarg2;
+                        ; 
 
 
             break;
-            case NOTEQUALITYSYMBOL :if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
+            case NOTEQUALITYSYMBOL :
+            
+            
+                        oldarg1 = execution.arg1;
+                        if ( isPointer(execution.arg1)  != 0 ) {
+                                execution.arg1 = returtIntValue(execution.arg1,1);
+                        }
+
+                        oldarg2 = execution.arg2;
+                        if ( isPointer(execution.arg2)  != 0 ) {
+                                execution.arg2 = returtIntValue(execution.arg2,1);
+                        }
+            
+            
+                                    if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
                                         if(returtIntValue(execution.arg1,1) != returtIntValue(execution.arg2,1)){
                                             modifyIntValue(execution.result,1,1);
                                         }
@@ -2099,11 +2784,27 @@ char ch;
                                         else{
                                             modifyCharValue(execution.result,0,1);
                                         }
-                                    } ; 
+                                    } 
+                                    execution.arg1 = oldarg1;
+                                    execution.arg2 = oldarg2;
+                        ; 
 
 
             break;
-            case LT :               if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
+            case LT :               
+            
+                        oldarg1 = execution.arg1;
+                        if ( isPointer(execution.arg1)  != 0 ) {
+                                execution.arg1 = returtIntValue(execution.arg1,1);
+                        }
+
+                        oldarg2 = execution.arg2;
+                        if ( isPointer(execution.arg2)  != 0 ) {
+                                execution.arg2 = returtIntValue(execution.arg2,1);
+                        }
+            
+            
+                                    if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
                                         if(returtIntValue(execution.arg1,1) < returtIntValue(execution.arg2,1)){
                                             modifyIntValue(execution.result,1,1);
                                         }
@@ -2140,9 +2841,27 @@ char ch;
                                     }
                                     if( (returntypebyByVirtualAddress(execution.arg1) == 3) & (returntypebyByVirtualAddress(execution.arg2) == 3) ) {
                                             modifyCharValue(execution.result,0,1);
-                                    } ;
+                                    }
+                                    execution.arg1 = oldarg1;
+                                    execution.arg2 = oldarg2;
+                         ;
             break;
-            case GT :               if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
+            case GT :               
+            
+                        oldarg1 = execution.arg1;
+                        if ( isPointer(execution.arg1)  != 0 ) {
+                                execution.arg1 = returtIntValue(execution.arg1,1);
+                        }
+
+                        oldarg2 = execution.arg2;
+                        if ( isPointer(execution.arg2)  != 0 ) {
+                                execution.arg2 = returtIntValue(execution.arg2,1);
+                        }
+            
+            
+            
+            
+                                    if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
                                         /*
                                         printf("Enter Both Int\n"); 
                                         */
@@ -2174,9 +2893,27 @@ char ch;
                                         }
                                     } else{
                                         modifyIntValue(execution.result,0,1);
-                                    }};
+                                    }}
+                                    
+                                    
+                                    execution.arg1 = oldarg1;
+                                    execution.arg2 = oldarg2;
+                        ;
             break;
-            case LOET :             if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
+            case LOET :             
+                        oldarg1 = execution.arg1;
+                        if ( isPointer(execution.arg1)  != 0 ) {
+                                execution.arg1 = returtIntValue(execution.arg1,1);
+                        }
+
+                        oldarg2 = execution.arg2;
+                        if ( isPointer(execution.arg2)  != 0 ) {
+                                execution.arg2 = returtIntValue(execution.arg2,1);
+                        }
+            
+            
+            
+                                    if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
                                         if(returtIntValue(execution.arg1,1) <= returtIntValue(execution.arg2,1)){
                                             modifyIntValue(execution.result,1,1);
                                         }
@@ -2194,9 +2931,26 @@ char ch;
                                         }
                                     } else{
                                         modifyIntValue(execution.result,0,1);
-                                    }}; 
+                                    }}
+                                    
+                                    execution.arg1 = oldarg1;
+                                    execution.arg2 = oldarg2;
+                                    ; 
             break;
-            case GOET :             if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
+            case GOET :             
+                        oldarg1 = execution.arg1;
+                        if ( isPointer(execution.arg1)  != 0 ) {
+                                execution.arg1 = returtIntValue(execution.arg1,1);
+                        }
+
+                        oldarg2 = execution.arg2;
+                        if ( isPointer(execution.arg2)  != 0 ) {
+                                execution.arg2 = returtIntValue(execution.arg2,1);
+                        }
+            
+            
+            
+                                    if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
                                         if(returtIntValue(execution.arg1,1) >= returtIntValue(execution.arg2,1)){
                                             modifyIntValue(execution.result,1,1);
                                         }
@@ -2214,10 +2968,26 @@ char ch;
                                         }
                                     } else{
                                         modifyIntValue(execution.result,0,1);
-                                    }} ;
+                                    }} 
+                                    
+                                    execution.arg1 = oldarg1;
+                                    execution.arg2 = oldarg2;
+                        ;
             break;
 
-            case ANDLOGICAL :        if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
+            case ANDLOGICAL :        
+            
+                        oldarg1 = execution.arg1;
+                        if ( isPointer(execution.arg1)  != 0 ) {
+                                execution.arg1 = returtIntValue(execution.arg1,1);
+                        }
+
+                        oldarg2 = execution.arg2;
+                        if ( isPointer(execution.arg2)  != 0 ) {
+                                execution.arg2 = returtIntValue(execution.arg2,1);
+                        }
+            
+                                    if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
                                         if(returtIntValue(execution.arg1,1) > 0 & 0 < returtIntValue(execution.arg2,1)){
                                             modifyIntValue(execution.result,1,1);
                                         }
@@ -2227,9 +2997,27 @@ char ch;
                                         
                                     }else{
                                         modifyIntValue(execution.result,0,1);
-                                    }  ;
+                                    }  
+                                    
+                                    
+                                    execution.arg1 = oldarg1;
+                                    execution.arg2 = oldarg2;
+                        ;
             break;
-            case ORLOGICAL :        if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
+            case ORLOGICAL :        
+            
+                                    oldarg1 = execution.arg1;
+                                    if ( isPointer(execution.arg1)  != 0 ) {
+                                            execution.arg1 = returtIntValue(execution.arg1,1);
+                                    }
+
+                                    oldarg2 = execution.arg2;
+                                    if ( isPointer(execution.arg2)  != 0 ) {
+                                            execution.arg2 = returtIntValue(execution.arg2,1);
+                                    }
+            
+            
+                                    if( (returntypebyByVirtualAddress(execution.arg1) == 1) & (returntypebyByVirtualAddress(execution.arg2) == 1) ) {
                                         if(returtIntValue(execution.arg1,1) > 0 || 0 < returtIntValue(execution.arg2,1)){
                                             modifyIntValue(execution.result,1,1);
                                         }
@@ -2239,26 +3027,40 @@ char ch;
                                         
                                     }else{
                                         modifyIntValue(execution.result,0,1);
-                                    }  ; 
+                                    } 
+                                    execution.arg1 = oldarg1;
+                                    execution.arg2 = oldarg2;
+                         ; 
             break;
-            case READVAL :  if( (returntypebyByVirtualAddress(execution.arg1) == 1) )  {
+            case READVAL :          oldresult = execution.result;
+                                    if ( isPointer(execution.result)  != 0 ) {
+                                            execution.result = returtIntValue(execution.result,1);
+                                    }
+                            if( (returntypebyByVirtualAddress(execution.result) == 1) )  {
                                 int expval;
                                 scanf("%d", &expval); 
                                 modifyIntValue(execution.result,expval,1);
                             }
-                            if( (returntypebyByVirtualAddress(execution.arg1) == 2) ) {
+                            if( (returntypebyByVirtualAddress(execution.result) == 2) ) {
                                 float expval;
                                 scanf("%f", &expval); 
                                 modifyFloatValue(execution.result,expval,1);
                             }
-                            if( (returntypebyByVirtualAddress(execution.arg1) == 3) ) {
+                            if( (returntypebyByVirtualAddress(execution.result) == 3) ) {
+                                printf("Enter char read\n"); 
                                 char expval;
-                                scanf("%c", &expval); 
-                                modifyFloatValue(execution.result,expval,1);
-                            } ;      
+                                scanf(" %c", &expval); 
+                                modifyCharValue(execution.result,expval,1);
+                            } ;
+                            execution.result = oldresult;      
             ;
             break;
-            case WRITEVAL : if( (returntypebyByVirtualAddress(execution.result) == 1) )  {
+            case WRITEVAL :         oldresult = execution.result;
+                                    if ( isPointer(execution.result)  != 0 ) {
+                                            execution.result = returtIntValue(execution.result,1);
+                                    }
+            
+                            if( (returntypebyByVirtualAddress(execution.result) == 1) )  {
                                 int expval = returtIntValue(execution.result,1);
                                 printf("%d\n", expval); 
                             }
@@ -2269,9 +3071,20 @@ char ch;
                             if( (returntypebyByVirtualAddress(execution.result) == 3) ) {
                                 char expval = returtcharValue(execution.result,1);
                                 printf("%c\n", expval); 
-                            };
+                            }
+                            if( (returntypebyByVirtualAddress(execution.result) == 4) ) {
+                                char * expval = returnStringValue(execution.result,1);
+                                printf("%s\n", expval); 
+                            }
+                            execution.result = oldresult;
+                            ;
             break;
-            case RETURNVAL : if( (returntypebyByVirtualAddress(execution.arg1) == 1) )  {
+            case RETURNVAL :        oldarg1 = execution.arg1;
+                                    if ( isPointer(execution.arg1)  != 0 ) {
+                                            execution.arg1 = returtIntValue(execution.arg1,1);
+                                    }
+            
+                            if( (returntypebyByVirtualAddress(execution.arg1) == 1) )  {
                                 int expval = returtIntValue(execution.arg1,1);
                                 modifyIntValue(execution.result,expval,1);
                             }
@@ -2282,87 +3095,85 @@ char ch;
                             if( (returntypebyByVirtualAddress(execution.arg1) == 3) ) {
                                 char expval = returtIntValue(execution.arg1,1);
                                 modifyFloatValue(execution.result,expval,1);
-                            }  ;
+                            }  
+                            execution.arg1 = oldarg1;
+                            ;
             break;
             case ENDFUNCTION : erraseLocalMemory() ; programcounter = GotoReturnStack[top-1];top--;
             break;
             case PARAM : if( (returntypebyByVirtualAddress(execution.arg1) == returntypebyByVirtualAddress(execution.result) & returntypebyByVirtualAddress(execution.result)  == 1 ) )  {
                                 modifyIntValue(execution.result,returtIntValue(execution.arg1,1),3);
-                                /*
-                                if(paramsActual == NULL){
-                                    printf("error number of params on a method on execution");
-                                    errorocurred = 1;
-                                }else{
-                                paramsActual = paramsActual->next;}
-                                */
                             }
                             else{
                                 if( (returntypebyByVirtualAddress(execution.arg1) == 2 & returntypebyByVirtualAddress(execution.result) == 2) ) {
                                     float expval = returtfloatValue(execution.arg1,1);
-                                    /*
-                                    Antes tenia un 2 al final, se cambio por un 3
-                                    */
                                     modifyFloatValue(execution.result,expval,3);
-                                    /*
-                                    if(paramsActual == NULL){
-                                        printf("error number of params on a method on execution");
-                                        errorocurred = 1;
-                                    }else{
-                                    paramsActual = paramsActual->next;}
-                                    */
                                 }
                                 else{
                                     if( (returntypebyByVirtualAddress(execution.arg1) == 3 & returntypebyByVirtualAddress(execution.arg1) == 3) ) {
                                         char expval = returtcharValue(execution.arg1,1);
                                         modifyCharValue(execution.result,expval,3);
-                                        /*
-                                        if(paramsActual == NULL){
-                                            printf("error number of params on a method on execution");
-                                            errorocurred = 1;
-                                        }
-                                        else{
-                                        paramsActual = paramsActual->next;
-                                            }
-                                        */
                                     }
                                     else{
                                         printf("error of type on params on a method on execution");
                                         errorocurred = 1;
                                         }
-                                    
                                 }
-                                
-                                
                             }
-                            /*
-                            if( (returntypebyByVirtualAddress(execution.arg1) == 2 & returntypebyByVirtualAddress(execution.result) == 2) ) {
-                                float expval = returtfloatValue(execution.arg1,1);
-                                modifyFloatValue(execution.result,expval,1);
-                            }
-                            if( (returntypebyByVirtualAddress(execution.arg1) == 3 & returntypebyByVirtualAddress(execution.arg1) == 3) ) {
-                                char expval = returtIntValue(execution.arg1,1);
-                                modifyFloatValue(execution.result,expval,1);
-                            } */
                              ;
             break;
-            case ERA :  sa = getProceduresDirectorybycodeinitial (execution.result);
-            pa = createLocalMemory(pa,sa->arrayParamsTypes[0],sa->arrayParamsTypes[1],
-                sa->arrayParamsTypes[2]) ;
+            case ERA :  
+            //printf("enter era\n");
+            sa = getProceduresDirectorybycodeinitial (execution.result);
+            //printf("enter sa\n");
+            pa = createLocalMemory(NULL,sa->arrayParamsTypes[0],sa->arrayParamsTypes[1],
+                sa->arrayParamsTypes[2], sa->temporalsCount[0], sa->temporalsCount[1]
+                , sa->temporalsCount[2], sa->temporalsCount[4]) ;
+            //printf("out sa\n");
             pa->next = newLocalMemory;
             newLocalMemory = pa;
-            newLocalMemory->priority = priority;
-            priority++;
+            break;
+            case VER :  oldresult = execution.result;
+                        if ( isPointer(execution.result)  != 0 ) {
+                                execution.result = returtIntValue(execution.result,1);
+                        }
+                        if( execution.arg1 >= returtIntValue(execution.result,1) ) {
+                        }
+                        else{
+                            printf("error array boundary exceeded");
+                            errorocurred = 1;
+                        }
+                        execution.result = oldresult;
+            break;
 
-            /*
-            paramsActual = sa->initialParam;
-            */
-            /*errors with params
-            tiene que ser una pila con nuevo y actual como la memoria local
-            se tiene q crear una nueva structura pila con params
-            */
+            case PENUP :  pen = 0;
+            ;
             break;
-            case VER :  ;
+            case  PENDOWN :  pen = 1;
+            ;
             break;
+            case LINE :  if( (returntypebyByVirtualAddress(execution.arg1) == 2 & returntypebyByVirtualAddress(execution.arg2) == 2) ) {
+                            float argument1 = returtfloatValue(execution.arg1,1);
+                            float argument2 = returtfloatValue(execution.arg2,1);
+                            newposx = argument1;
+                            newposy = argument2;
+                            //printf("Error Line\n") ;
+                            slow = 1000*1000;
+                            displayLine ();
+                        }
+                                
+            ;
+            break;
+            case CIRCLE : if( (returntypebyByVirtualAddress(execution.arg1) == 2 ) ) {
+                            float argument1 = returtfloatValue(execution.arg1,1);
+                            radio = argument1;
+                            slow = 1000*1000;
+                            displayCircle (); 
+                        } 
+            
+            ;
+            break;
+
             case END : printf("Ending execution\n") ;
             break;
 
@@ -2391,68 +3202,17 @@ char ch;
 
         }
     } while (execution.op != END & programcounter < 999 & errorocurred != 1);
+    eliminateGlbalMemory();
+    eliminateall();
+    
+    //glFlush();
+    glutSwapBuffers();
+    }
+    justOneCicle = 1;
+    
+    printf( "End\n" ); 
+    
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /*----------------------------------------------------------------*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
